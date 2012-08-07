@@ -255,14 +255,16 @@ int main()
 
 	// Calcolo Funzioni OTTICHE
 
-		double *A=new double[2], *B=new double[2], *vett_i=new double[2], AMax, AMin, BMax, BMin;
+		double *A=new double[2], *B=new double[2], *vett_i=new double[4], AMax, AMin, BMax, BMin;
+
 	
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
 	vett_i[2]=pos_y;
 	vett_i[3]=imp_y;
 
-	FILE *posizionePart=fopen("Posizione_Particelle.txt","w");
+	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
+
 	fprintf(posizionePart," %+10.5f",S=0.0);
 	fprintf(posizionePart," %+10.5f",vett_i[0]);
 	fprintf(posizionePart," %+10.5f",vett_i[1]);
