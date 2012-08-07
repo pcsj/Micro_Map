@@ -3,6 +3,26 @@
 #include <cmath>
 #include <iostream>
 
+#define EPSILON				1.0
+#define DRIFT_LENGTH		0.3
+#define CELL_LENGTH			0.2
+#define FODO_LENGTH			1.0
+#define ENERGIA				30.0
+//#define GRADIENTE_FOC1		12.15
+//#define GRADIENTE_DEF1		11.85
+#define CHARGE 1.602176565e-19
+#define MP_KG 1.6726231e-27
+#define MP_MEV 938.272013
+#define SPEED_OF_LIGHT 2.99792458e8
+//#define GRADIENTE_FOC1		9.616
+//#define GRADIENTE_DEF1		9.3786
+#define GRADIENTE_FOC1		10.0
+#define GRADIENTE_DEF1		10.0
+#define FOC					0
+#define DEFOC				2
+#define n_step				100
+
+
 #define pos_x 0.0
 #define pos_y 0.0
 #define imp_x 0.05
@@ -32,9 +52,11 @@ int dsMap(double L)
 double *prod(double * A,double ** N,double S)
 {
 	double *H = new double[4];
+	for (int i=0; i<4; i++) H[i] = 0.0;
+
 	for (int i=0; i<4; i++)
 		for (int j=0; j<4; j++)
-		H[i] += A[j] * N[i][j];
+			H[i] += A[j] * N[i][j];
 	for (int i=0; i<4; i++)
 		A[i]=H[i];
 	printf("\nA[0] = %f\nA[1] = %f\nA[2] = %f\nA[3] = %f\nS=%f",A[0],A[1],A[2],A[3],S);
@@ -128,24 +150,6 @@ int main()
 //	FILE * output1=fopen("matrici.txt","w");
 	FILE * output2=fopen("Matrici_Prova.txt","w");
 	
-#define EPSILON				1.0
-#define DRIFT_LENGTH		0.3
-#define CELL_LENGTH			0.2
-#define FODO_LENGTH			1.0
-#define ENERGIA				30.0
-//#define GRADIENTE_FOC1		12.15
-//#define GRADIENTE_DEF1		11.85
-#define CHARGE 1.602176565e-19
-#define MP_KG 1.6726231e-27
-#define MP_MEV 938.272013
-#define SPEED_OF_LIGHT 2.99792458e8
-//#define GRADIENTE_FOC1		9.616
-//#define GRADIENTE_DEF1		9.3786
-#define GRADIENTE_FOC1		10.0
-#define GRADIENTE_DEF1		10.0
-#define FOC					0
-#define DEFOC				2
-#define n_step				100
 
 /****************
 	double EPSILON=1.0;
