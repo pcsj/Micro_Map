@@ -1,8 +1,13 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <cstdio> 
 #include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <iostream>
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#pragma warning(disable : 981)
+#endif
+
 
 #define EPSILON				1.0
 #define N_MAX_ELEMENTS		100	
@@ -57,9 +62,9 @@ void  defocusing (vector< vector <double> > , double , double , FILE *);
 
 void  focusing (vector< vector <double> > , double , double , FILE * );
 
-void  drift (vector< vector <double> > , double , double , FILE * );
+void  drift (vector< vector <double> > , double , FILE * );
 
-void scrivimatr (vector< vector <double> > , FILE * );
+void scrivimatr2D (vector< vector <double> > , FILE * );
 
 void scrividati (double , double [], double [], double , double , double , double , FILE * );
 

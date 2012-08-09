@@ -95,7 +95,7 @@ void  focusing (vector< vector <double> > M, double d1, double S, FILE * file)
 			}
 		}
 
-void  drift (vector< vector <double> > M, double d1, double S, FILE * file)
+void  drift (vector< vector <double> > M, double S, FILE * file)
 		{
 			M[0][0]=M[1][1]=M[2][2]=M[3][3]=1.;
 			M[0][1]=M[2][3]=S;
@@ -237,6 +237,8 @@ int main()
 		contatore++;
 		}	
 
+	printf("contatore: %d",contatore);
+	cout << "contatore: " << contatore << std::endl;	
 	//Qui inizializziamo le matrici, attenzione: Dx, O, Fx sono dei vettori di matrici e così anche OI,DxI,FxI
 
 	//double ** F = new double*[4];
@@ -277,7 +279,6 @@ int main()
 
 	double S=1.0;
 	S = S/n_step;
-	double dl=S;
 
 	for (int i=0;i<contatore;i++)
 		{
@@ -292,7 +293,7 @@ int main()
 		else if (elemento[i]=='D')
 		defocusing(Dx[i],d1[i],CELL_LENGTH,output3);
 		else if (elemento[i]=='O')
-		drift(O[i],d1[i],DRIFT_LENGTH,output3);
+		drift(O[i],DRIFT_LENGTH,output3);
 		else
 		printf("Qua si è sbagliato qualcosa");
 		}
@@ -378,50 +379,38 @@ int main()
 
 //ora primi dell'iterazione mi calcolo le micromappe Li di lunghezza S=L/n
 
-	int N;
-	N = (int) (2.*dsMap(DRIFT_LENGTH)+2.*dsMap(CELL_LENGTH));
-
 	S=DRIFT_LENGTH/dsMap(DRIFT_LENGTH);
 //Calcolo MICROMAPPE per il Drift
 	for (int i=0; i < contatore; i++)
 	{
-		if (O[i][0][0] == 0.0) continue;
-		drift(O[i],0.0,S,output2);
-	}
-//e il suo inverso
-	for (int i=0; i < contatore; i++)
-	{
-		if (OI[i][0][0] == 0.0) continue;
-		drift(OI[i],0.0,S,output2);
+		if (elemento[i] == 'O')
+		{
+			drift(O[i],S,output2);
+			drift(OI[i],-S,output2);
+		}
 	}
 
 	S=CELL_LENGTH/dsMap(CELL_LENGTH);
 // per il Focusing
 	for (int i=0; i < contatore; i++)
 	{
-		if (Fx[i][0][0] == 0.0) continue;
-		focusing(Fx[i],f1[i],S,output2);
-	}
-//e il suo inverso
-	for (int i=0; i < contatore; i++)
-	{
-		if (FxI[i][0][0] == 0.0) continue;
-		focusing(FxI[i],f1[i],S,output2);
-	}
-	
-//per il Defocusing
-	for (int i=0; i < contatore; i++)
-	{
-		if (Dx[i][0][0] == 0.0) continue;
-		defocusing(Dx[i],d1[i],S,output2);
+		if (elemento[i] == 'F')
+		{
+			focusing(Fx[i],f1[i],S,output2);
+			focusing(FxI[i],f1[i],-S,output2);
+		}
 	}
 
-//e il suo inverso
-		for (int i=0; i < contatore; i++)
+	//per il Defocusing
+	for (int i=0; i < contatore; i++)
 	{
-		if (DxI[i][0][0] == 0.0) continue;
-		drift(DxI[i],d1[i],S,output2);
-	}	
+		if (elemento[i] == 'D')
+		{
+			defocusing(Dx[i],d1[i],S,output2);
+			defocusing(DxI[i],d1[i],-S,output2);
+		}
+	}
+
 
 	fprintf(output,"\n#   S  ");
 	fprintf(output,"      Alpha x  ");
