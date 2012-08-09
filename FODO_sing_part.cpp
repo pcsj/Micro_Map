@@ -222,23 +222,38 @@ int main()
 	FILE * output=fopen("risultatiFINALI.txt","w");
 	FILE * output2=fopen("Matrici_Prova.txt","w");
 	FILE * output3=fopen("Matrice.txt","w");
-	FILE * parametri=fopen("parametri.txt","r");
+
+	string utile_per_contare;
+	int conta_righe_parametri = 0;
+	ifstream parametri("parametri.txt");
+//	FILE * parametri=fopen("parametri.txt","r");
+	do
+	{
+		parametri >> utile_per_contare;
+		if(parametri.eof()) break;
+		parametri.ignore(1000, '\n');
+		conta_righe_parametri++;
+	}
+	while(!parametri.eof());
+	parametri.clear();
+	parametri.seekg(0,std::ios::beg);
 
 	// qui di leggono tutti i dati
-	char *elemento=new char[N_MAX_ELEMENTS];
-	double * lunghezza= new double[N_MAX_ELEMENTS];
-	double * gradiente= new double[N_MAX_ELEMENTS];
+	char *elemento=new char[conta_righe_parametri];
+	char *buffer=new char[100];
+	double * lunghezza= new double[conta_righe_parametri];
+	double * gradiente= new double[conta_righe_parametri];
 	int contatore=0;
-	while(1)  // loop infinito
-		{
-		if(feof(parametri)) break;
-		if (contatore >= N_MAX_ELEMENTS) break;
-		fscanf(parametri,"%c %lf %lf", &elemento[contatore], &lunghezza[contatore], &gradiente[contatore]);
+	for (int i = 0; i < conta_righe_parametri; i++)
+	{
+		parametri >> elemento[i];
+		parametri >> gradiente[i];
+		parametri >> lunghezza[i];
+		printf("tipo elemento: %c, gradiente: %f, lunghezza: %f\n", elemento[contatore], gradiente[contatore], lunghezza[contatore]);
 		contatore++;
-		}	
+	}
 
 	printf("contatore: %d",contatore);
-	cout << "contatore: " << contatore << std::endl;	
 	//Qui inizializziamo le matrici, attenzione: Dx, O, Fx sono dei vettori di matrici e così anche OI,DxI,FxI
 
 	//double ** F = new double*[4];
@@ -295,7 +310,7 @@ int main()
 		else if (elemento[i]=='O')
 		drift(O[i],DRIFT_LENGTH,output3);
 		else
-		printf("Qua si è sbagliato qualcosa");
+		printf("Qua si e' sbagliato qualcosa\n");
 		}
 
 #ifdef DEBUG
@@ -445,7 +460,6 @@ int main()
 	fclose(output);
 	fclose(output2);
 	fclose(posizionePart);
-	fclose(parametri);
 	fclose(output3);
-
+	parametri.close();
 }
