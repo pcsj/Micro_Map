@@ -18,7 +18,8 @@
 //#define GRADIENTE_DEF1		9.3786
 #define GRADIENTE_FOC1		10.0
 #define GRADIENTE_DEF1		10.0
-#define FOC					0
+#define DRIFT					0
+#define FOC					1
 #define DEFOC				2
 #define n_step				100
 
@@ -106,6 +107,60 @@ double **prod(double ** A, double ** B)
 	}
 */
 
+void micro_map (double ** M, double d1, double S, int F,FILE * file)
+	{
+		
+	if (F==DEFOC)
+		{
+			M[0][0]=M[1][1]=cosh(d1*S);
+			M[0][1]=sinh(d1*S)/d1;
+			M[1][0]=sinh(d1*S)*d1;
+			M[2][2]=M[3][3]=cos(d1*S);
+			M[2][3]=sin(d1*S)/d1;
+			M[3][2]=-sin(d1*S)*d1;
+
+			for(int k=0; k < 4; k++)
+			{
+				fprintf(file,"\n");
+				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
+			}
+		}
+	else if (F==FOC)
+		{
+
+			M[0][0]=M[1][1]=cos(d1*S);
+			M[0][1]=sin(d1*S)/d1;
+			M[1][0]=-sin(d1*S)*d1;
+			M[2][2]=M[3][3]=cosh(d1*S);
+			M[2][3]=sinh(d1*S)/d1;
+			M[3][2]=sinh(d1*S)*d1;	
+			
+			for(int k=0; k < 4; k++)
+			{
+				fprintf(file,"\n");
+				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
+			}
+
+
+		}
+	else if (F==DRIFT)
+		{
+			M[0][0]=M[1][1]=M[2][2]=M[3][3]=1.;
+			M[0][1]=M[2][3]=S;
+
+			for(int k=0; k < 4; k++)
+			{
+				fprintf(file,"\n");
+				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
+			}
+		}
+	else
+		{
+			printf("Hai chiamato micro_map con un parametro sbagliato\n");
+		}
+	}
+
+
 void scrivimatr (double ** M, FILE * output2)
 	{
 	for(int k=0; k < 4; k++)
@@ -115,6 +170,18 @@ void scrivimatr (double ** M, FILE * output2)
 		}
 	}
 
+void scrividati (double s, double A[], double B[], double AMax, double AMin, double BMax, double BMin, FILE * file)
+	{
+		fprintf(file,"\n %+7.4f",s);
+		fprintf(file," %+10.5f",A[1]);
+		fprintf(file," %+10.5f",B[1]);
+		fprintf(file," %+10.5f",A[0]);
+		fprintf(file," %+10.5f",B[0]);
+		fprintf(file," %+10.5f",AMax);
+		fprintf(file," %+10.5f",AMin);
+		fprintf(file," %+10.5f",BMax);
+		fprintf(file," %+10.5f",BMin);
+	}
 
 
 int main() 
@@ -149,6 +216,7 @@ int main()
 	FILE * output=fopen("risultatiFINALI.txt","w");
 //	FILE * output1=fopen("matrici.txt","w");
 	FILE * output2=fopen("Matrici_Prova.txt","w");
+	FILE * output3=fopen("Matrice.txt","w");
 	
 
 /****************
@@ -180,22 +248,28 @@ int main()
 	fprintf(output,"\ngrad. foc.    %+20.10f ", f1*f1);
 	fprintf(output,"\ngrad. defoc.  %+20.10f ", d1*d1);
 
-	O[0][0]=O[1][1]=O[2][2]=O[3][3]=1.;
-	O[0][1]=O[2][3]=DRIFT_LENGTH;
+	micro_map(O,d1,DRIFT_LENGTH,DRIFT,output3);
+	micro_map(Fx,f1,CELL_LENGTH,FOC,output3);
+	micro_map(Dx,d1,CELL_LENGTH,DEFOC,output3);
 
-	Fx[0][0]=Fx[1][1]=cos(f1*e);
-	Fx[0][1]=sin(f1*e)/f1;
-	Fx[1][0]=-sin(f1*e)*f1;
-	Fx[2][2]=Fx[3][3]=cosh(f1*e);
-	Fx[2][3]=sinh(f1*e)/f1;
-	Fx[3][2]=sinh(f1*e)*f1;
+	//O[0][0]=O[1][1]=O[2][2]=O[3][3]=1.;
+	//O[0][1]=O[2][3]=DRIFT_LENGTH;
 
-	Dx[0][0]=Dx[1][1]=cosh(d1*e);
-	Dx[0][1]=sinh(d1*e)/d1;
-	Dx[1][0]=sinh(d1*e)*d1;
-	Dx[2][2]=Dx[3][3]=cos(d1*e);
-	Dx[2][3]=sin(d1*e)/d1;
-	Dx[3][2]=-sin(d1*e)*d1;
+	//Fx[0][0]=Fx[1][1]=cos(f1*e);
+	//Fx[0][1]=sin(f1*e)/f1;
+	//Fx[1][0]=-sin(f1*e)*f1;
+	//Fx[2][2]=Fx[3][3]=cosh(f1*e);
+	//Fx[2][3]=sinh(f1*e)/f1;
+	//Fx[3][2]=sinh(f1*e)*f1;
+
+	//Dx[0][0]=Dx[1][1]=cosh(d1*e);
+	//Dx[0][1]=sinh(d1*e)/d1;
+	//Dx[1][0]=sinh(d1*e)*d1;
+	//Dx[2][2]=Dx[3][3]=cos(d1*e);
+	//Dx[2][3]=sin(d1*e)/d1;
+	//Dx[3][2]=-sin(d1*e)*d1;
+
+
 
 #ifdef DEBUG
 
@@ -345,11 +419,18 @@ int main()
 	fprintf(output,"  Alpha y  ");
 	fprintf(output,"  Beta y ");
 
-	fprintf(output,"\n %+7.4f",S=0.0);
-	fprintf(output," %+10.5f",A[1]);
-	fprintf(output," %+10.5f",B[1]);
-	fprintf(output," %+10.5f",A[0]);
-	fprintf(output," %+10.5f",B[0]);
+	//fprintf(output,"\n %+7.4f",S=0.0);
+	//fprintf(output," %+10.5f",A[1]);
+	//fprintf(output," %+10.5f",B[1]);
+	//fprintf(output," %+10.5f",A[0]);
+	//fprintf(output," %+10.5f",B[0]);
+	
+	AMax= sqrt(A[1]*EPSILON);
+	AMin= sqrt((A[0]*A[0]+1)*EPSILON/A[1]);
+	BMax= sqrt(B[1]*EPSILON);
+	BMin= sqrt((B[0]*B[0]+1)*EPSILON/B[1]);
+	
+		scrividati(0.0,A,B,AMax,AMin,BMax,BMin,output);
 
 // Primo ciclo per la O
 
@@ -414,17 +495,18 @@ int main()
 		//--------
 	
 		S+=dl;
-		fprintf(output,"\n %+7.4f",S);
-		fprintf(output," %+10.5f",A[1]);
-		fprintf(output," %+10.5f",B[1]);
-		fprintf(output," %+10.5f",A[0]);
-		fprintf(output," %+10.5f",B[0]);
-//		fprintf(output," %+10.5f",C[0]);
-//		fprintf(output," %+10.5f",D[0]);
-		fprintf(output," %+10.5f",AMax);
-		fprintf(output," %+10.5f",AMin);
-		fprintf(output," %+10.5f",BMax);
-		fprintf(output," %+10.5f",BMin);
+		scrividati(S,A,B,AMax,AMin,BMax,BMin,output);
+//		fprintf(output,"\n %+7.4f",S);
+//		fprintf(output," %+10.5f",A[1]);
+//		fprintf(output," %+10.5f",B[1]);
+//		fprintf(output," %+10.5f",A[0]);
+//		fprintf(output," %+10.5f",B[0]);
+////		fprintf(output," %+10.5f",C[0]);
+////		fprintf(output," %+10.5f",D[0]);
+//		fprintf(output," %+10.5f",AMax);
+//		fprintf(output," %+10.5f",AMin);
+//		fprintf(output," %+10.5f",BMax);
+//		fprintf(output," %+10.5f",BMin);
 
 	}
 
@@ -490,18 +572,23 @@ int main()
 			
 		//--------
 	
+		AMax= sqrt(A[1]*EPSILON);
+		AMin= sqrt((A[0]*A[0]+1)*EPSILON/A[1]);
+		BMax= sqrt(B[1]*EPSILON);
+		BMin= sqrt((B[0]*B[0]+1)*EPSILON/B[1]);
 		S+=dl;
-		fprintf(output,"\n %+7.4f",S);
-		fprintf(output," %+10.5f",A[1]);
-		fprintf(output," %+10.5f",B[1]);
-		fprintf(output," %+10.5f",A[0]);
-		fprintf(output," %+10.5f",B[0]);
-//		fprintf(output," %+10.5f",C[0]);
-//		fprintf(output," %+10.5f",D[0]);
-		fprintf(output," %+10.5f",AMax);
-		fprintf(output," %+10.5f",AMin);
-		fprintf(output," %+10.5f",BMax);
-		fprintf(output," %+10.5f",BMin);
+		scrividati(S,A,B,AMax,AMin,BMax,BMin,output);
+//		fprintf(output,"\n %+7.4f",S);
+//		fprintf(output," %+10.5f",A[1]);
+//		fprintf(output," %+10.5f",B[1]);
+//		fprintf(output," %+10.5f",A[0]);
+//		fprintf(output," %+10.5f",B[0]);
+////		fprintf(output," %+10.5f",C[0]);
+////		fprintf(output," %+10.5f",D[0]);
+//		fprintf(output," %+10.5f",AMax);
+//		fprintf(output," %+10.5f",AMin);
+//		fprintf(output," %+10.5f",BMax);
+//		fprintf(output," %+10.5f",BMin);
 
 	}
 
@@ -566,17 +653,18 @@ int main()
 		//--------
 
 		S+=dl;
-		fprintf(output,"\n %+7.4f",S);
-		fprintf(output," %+10.5f",A[1]);
-		fprintf(output," %+10.5f",B[1]);
-		fprintf(output," %+10.5f",A[0]);
-		fprintf(output," %+10.5f",B[0]);
-//		fprintf(output," %+10.5f",C[0]);
-//		fprintf(output," %+10.5f",D[0]);
-		fprintf(output," %+10.5f",AMax);
-		fprintf(output," %+10.5f",AMin);
-		fprintf(output," %+10.5f",BMax);
-		fprintf(output," %+10.5f",BMin);
+		scrividati(S,A,B,AMax,AMin,BMax,BMin,output);
+//		fprintf(output,"\n %+7.4f",S);
+//		fprintf(output," %+10.5f",A[1]);
+//		fprintf(output," %+10.5f",B[1]);
+//		fprintf(output," %+10.5f",A[0]);
+//		fprintf(output," %+10.5f",B[0]);
+////		fprintf(output," %+10.5f",C[0]);
+////		fprintf(output," %+10.5f",D[0]);
+//		fprintf(output," %+10.5f",AMax);
+//		fprintf(output," %+10.5f",AMin);
+//		fprintf(output," %+10.5f",BMax);
+//		fprintf(output," %+10.5f",BMin);
 
 	}
 
@@ -642,17 +730,18 @@ int main()
 		//--------
 		
 		S+=dl;
-		fprintf(output,"\n %+7.4f",S);
-		fprintf(output," %+10.5f",A[1]);
-		fprintf(output," %+10.5f",B[1]);
-		fprintf(output," %+10.5f",A[0]);
-		fprintf(output," %+10.5f",B[0]);
-//		fprintf(output," %+10.5f",C[0]);
-//		fprintf(output," %+10.5f",D[0]);
-		fprintf(output," %+10.5f",AMax);
-		fprintf(output," %+10.5f",AMin);
-		fprintf(output," %+10.5f",BMax);
-		fprintf(output," %+10.5f",BMin);
+		scrividati(S,A,B,AMax,AMin,BMax,BMin,output);
+//		fprintf(output,"\n %+7.4f",S);
+//		fprintf(output," %+10.5f",A[1]);
+//		fprintf(output," %+10.5f",B[1]);
+//		fprintf(output," %+10.5f",A[0]);
+//		fprintf(output," %+10.5f",B[0]);
+////		fprintf(output," %+10.5f",C[0]);
+////		fprintf(output," %+10.5f",D[0]);
+//		fprintf(output," %+10.5f",AMax);
+//		fprintf(output," %+10.5f",AMin);
+//		fprintf(output," %+10.5f",BMax);
+//		fprintf(output," %+10.5f",BMin);
 
 	}
 
