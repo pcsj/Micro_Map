@@ -8,6 +8,7 @@
 #include <string>
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 #pragma warning(disable : 981)
+#pragma warning(disable : 383)
 #endif
 
 
@@ -57,7 +58,7 @@ vector< vector <double> >  drift (vector< vector <double> > , double , FILE * ,i
 
 void scrivimatr2D (vector< vector <double> > , FILE * );
 
-void scrividati (double , double , double , double , double , double , double , FILE * );
+void scrividati (double , double [] , double [], double , double , double , double , FILE * );
 
 void inizializza3D(double ***,int , int );
 

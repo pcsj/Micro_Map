@@ -267,7 +267,6 @@ int main()
 
 	// qui di leggono tutti i dati
 	char *elemento=new char[conta_righe_parametri];
-	char *buffer=new char[100];
 	double * lunghezza= new double[conta_righe_parametri];
 	double * gradiente= new double[conta_righe_parametri];
 	int contatore=0;
