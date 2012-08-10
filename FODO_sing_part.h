@@ -1,4 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
+
+#define DEBUG
+
 #include <cstdio> 
 #include <cstdlib>
 #include <cmath>
@@ -20,7 +23,7 @@
 #define SPEED_OF_LIGHT 2.99792458e8
 #define FOC					0
 #define DEFOC				2
-#define n_step				100
+#define N_STEP				100
 
 
 
@@ -34,15 +37,12 @@
 #include <fenv.h>
 #endif
 
-#define DEBUG
-#define MOD1
-//#define MOD2
 
 using namespace std;
 
 
 
-int dsMap(double );
+int dsMap(double ,double, int);
 
 double *prod(double *,vector< vector <double> > ,double );
 
@@ -66,7 +66,7 @@ void inizializza2D(double **, int );
 
 double * pos_part(vector< vector <double> > ,FILE * ,double *,double );
 
-void assi_ellissi(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> > , double , FILE * );
+vector< vector <double> >  assi_ellissi(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> > , double , double *, double *, double *, double *);
 
 
 
