@@ -43,28 +43,29 @@ using namespace std;
 
 int dsMap(double );
 
-double *prod(double * ,vector< vector <double> >,double );
+double *prod(double *,vector< vector <double> > ,double );
 
 double *optics(vector< vector <double> > ,int );
 
 vector< vector <double> > prodo(vector< vector <double> > , vector< vector <double> > , int );
 
-vector< vector <double> >  defocusing (vector< vector <double> > , double , double , FILE *);
+vector< vector <double> >  defocusing (vector< vector <double> > , double , double , FILE * ,int );
 
-vector< vector <double> >  focusing (vector< vector <double> > , double , double , FILE * );
+vector< vector <double> >  focusing (vector< vector <double> > , double , double , FILE * ,int );
 
-vector< vector <double> >  drift (vector< vector <double> > , double , FILE * );
+vector< vector <double> >  drift (vector< vector <double> > , double , FILE * ,int );
 
 void scrivimatr2D (vector< vector <double> > , FILE * );
 
-void scrividati (double , double [], double [], double , double , double , double , FILE * );
+void scrividati (double , double , double , double , double , double , double , FILE * );
 
 void inizializza3D(double ***,int , int );
 
 void inizializza2D(double **, int );
 
-void similitudine_optics(vector< vector <double> >, vector< vector <double> >, vector< vector <double> >, vector< vector <double> >, double * ,double ,double , double , FILE *,FILE *);
+double * pos_part(vector< vector <double> > ,FILE * ,double *,double );
 
+void assi_ellissi(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> > , double , FILE * );
 
 
 
