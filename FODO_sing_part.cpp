@@ -481,57 +481,56 @@ for (int i=0;i<4;i++)
 	scrividati(0.0,A,B,AMax,AMin,BMax,BMin,funzioni_ottiche);
 
 	double dl=0.0;
-
+	double lunghezza_accumulata=0.0;
 	for (int i=0;i<contatore;i++)
 	{
+		dl=lunghezza[i]/dsMap(lunghezza[i]);
 		if (elemento[i]=='O')
 		{
 			fprintf(matrici_iniziali,"\n#Drift #%d",i);
 			fprintf(funzioni_ottiche,"\n#Drift #%d",i);
-			while (S<lunghezza[i])
+			while (S<(lunghezza_accumulata+lunghezza[i]))
 			{
-				dl=lunghezza[i]/dsMap(lunghezza[i]);
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				
-				vett_i=pos_part(F,posizionePart,vett_i,S);
-				
+				vett_i=pos_part(O[i],posizionePart,vett_i,S);
 				assi_ellissi(F,OI[i],O[i],S,funzioni_ottiche);
 				S+=dl;
 			}
+			lunghezza_accumulata+=lunghezza[i];
 		}
 		else if (elemento[i]=='F')
 		{
 			fprintf(matrici_iniziali,"\n#Foc. #%d",i);			
 			fprintf(funzioni_ottiche,"\n#Foc. #%d",i);
-			while (S<lunghezza[i])
+			while (S<(lunghezza_accumulata+lunghezza[i]))
 			{
-				dl=lunghezza[i]/dsMap(lunghezza[i]);
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
 				
-				vett_i=pos_part(F,posizionePart,vett_i,S);
+				vett_i=pos_part(Fx[i],posizionePart,vett_i,S);
 				
 				assi_ellissi(F,FxI[i],Fx[i],S,funzioni_ottiche);
 				S+=dl;
 
 			}
+			lunghezza_accumulata+=lunghezza[i];
 		}
 		else if (elemento[i]=='D')
 		{
 			fprintf(matrici_iniziali,"\n#Defoc. #%d",i);
 			fprintf(funzioni_ottiche,"\n#Defoc. #%d",i);
-			while (S<lunghezza[i])
+			while (S<(lunghezza_accumulata+lunghezza[i]))
 			{
-				dl=lunghezza[i]/dsMap(lunghezza[i]);
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
 				
-				vett_i=pos_part(F,posizionePart,vett_i,S);
+				vett_i=pos_part(Dx[i],posizionePart,vett_i,S);
 				
 				assi_ellissi(F,FxI[i],Fx[i],S,funzioni_ottiche);
 				S+=dl;
 			}
+			lunghezza_accumulata+=lunghezza[i];
 		}
 	}
 		
