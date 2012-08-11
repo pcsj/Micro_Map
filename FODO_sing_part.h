@@ -64,10 +64,10 @@ void inizializza3D(double ***,int , int );
 
 void inizializza2D(double **, int );
 
-double * pos_part(vector< vector <double> > ,FILE * ,double *,double );
+void scrivi_pos_part(FILE * ,double *,double );
 
-vector< vector <double> >  assi_ellissi(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> > , double , double *, double *, double *, double *);
+vector< vector <double> >  simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 
-
+double *assi_ellissi(double *,double*);
 
 

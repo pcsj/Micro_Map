@@ -150,17 +150,17 @@ void scrivimatr2D (vector< vector <double> > M, FILE * output2)
 		}
 	}
 
-void scrividati (double s, double A[], double B[], double AMax, double AMin, double BMax, double BMin, FILE * file)
+void scrividati (double s, double *A, double *B,double *AMaxMin, double *BMaxMin, FILE * file)
 	{
 		fprintf(file,"\n %+7.4f",s);
 		fprintf(file," %+10.5f",A[1]);
 		fprintf(file," %+10.5f",B[1]);
 		fprintf(file," %+10.5f",A[0]);
 		fprintf(file," %+10.5f",B[0]);
-		fprintf(file," %+10.5f",AMax);
-		fprintf(file," %+10.5f",AMin);
-		fprintf(file," %+10.5f",BMax);
-		fprintf(file," %+10.5f",BMin);
+		fprintf(file," %+10.5f",AMaxMin[1]);
+		fprintf(file," %+10.5f",BMaxMin[1]);
+		fprintf(file," %+10.5f",AMaxMin[0]);
+		fprintf(file," %+10.5f",BMaxMin[0]);
 	}
 
 void inizializza3D(double ***M,int a, int dimensione)
@@ -189,20 +189,16 @@ void inizializza2D(double **M, int dimensione)
 				M[i][j]=0.0;
 	}
 
-double * pos_part(vector< vector <double> > F,FILE * posizionePart,double *vett_i,double S)
+void scrivi_pos_part(FILE * posizionePart,double *vett_i, double S)
 {
-
-	vett_i=prod(vett_i,F,S);
 	fprintf(posizionePart," %+10.5f",S);
 	fprintf(posizionePart," %+10.5f",vett_i[0]);
 	fprintf(posizionePart," %+10.5f",vett_i[1]);
 	fprintf(posizionePart," %+10.5f",vett_i[2]);
 	fprintf(posizionePart," %+10.5f\n",vett_i[3]);
-	return vett_i;
-
 }
 
-vector< vector <double> >  assi_ellissi(vector< vector <double> > F,vector< vector <double> > OI, vector< vector <double> > O, double S, double *alpha, double *beta, double *aminmax, double *bminmax)
+vector< vector <double> > simil(vector< vector <double> > F,vector< vector <double> > OI, vector< vector <double> > O)
 {
 	vector <vector <double> > K(4,vector<double>(4,0.0));
 
@@ -214,16 +210,14 @@ vector< vector <double> >  assi_ellissi(vector< vector <double> > F,vector< vect
 	for (int i=0;i<4;i++)
 		for (int j=0;j<4;j++) 
 			F[i][j]=K[i][j];
+	return F;
+}
 
-	alpha = optics (F,FOC);
-	beta  = optics (F,DEFOC);
-
+double * assi_ellissi(double *alpha, double *aminmax)
+{
 	aminmax[0] = sqrt((alpha[1])*EPSILON);
 	aminmax[1] = sqrt(((alpha[0])* (alpha[0])+1)*EPSILON / (alpha[1]));
-	bminmax[0] = sqrt((beta[1])*EPSILON);
-	bminmax[1] = sqrt(((beta[0])*(beta[0])+1)*EPSILON/ (beta[1]));
-	
-	return F;
+	return aminmax;
 }
 
 
@@ -397,7 +391,28 @@ for (int i=0;i<4;i++)
 
 	// Calcolo Funzioni OTTICHE
 
-		double *A=new double[2], *B=new double[2], *vett_i=new double[4], AMax, AMin, BMax, BMin;
+	double *vett_i=new double[4];
+	double *alpha = new double[2];
+	double *beta = new double[2];
+	double *aminmax = new double[2];
+	double *bminmax = new double[2];
+
+	for (int i = 0; i < 2; i++) alpha[i]=beta[i]=aminmax[i]=bminmax[i]=0.;
+
+	fprintf(funzioni_ottiche,"\n#   S  ");
+	fprintf(funzioni_ottiche,"      Alpha x  ");
+	fprintf(funzioni_ottiche,"   Beta x ");
+	fprintf(funzioni_ottiche,"  Alpha y  ");
+	fprintf(funzioni_ottiche,"  Beta y ");
+
+	alpha=optics(F,FOC);
+	beta=optics(F,DEFOC);
+	
+	aminmax=assi_ellissi(alpha,aminmax);
+	bminmax=assi_ellissi(beta,bminmax);
+
+	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+
 
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
@@ -412,8 +427,6 @@ for (int i=0;i<4;i++)
 	
 	fprintf(outputDEBUG, "\nFODO:");
 	scrivimatr2D(F,outputDEBUG);
-	A = optics(F,FOC);
-	B = optics(F,DEFOC);
 
 /************************************************************************/
 
@@ -453,28 +466,11 @@ for (int i=0;i<4;i++)
 		}
 	}
 
+/***********************************************************************/
 
-	fprintf(funzioni_ottiche,"\n#   S  ");
-	fprintf(funzioni_ottiche,"      Alpha x  ");
-	fprintf(funzioni_ottiche,"   Beta x ");
-	fprintf(funzioni_ottiche,"  Alpha y  ");
-	fprintf(funzioni_ottiche,"  Beta y ");
-	
-	AMax= sqrt(A[1]*EPSILON);
-	AMin= sqrt((A[0]*A[0]+1)*EPSILON/A[1]);
-	BMax= sqrt(B[1]*EPSILON);
-	BMin= sqrt((B[0]*B[0]+1)*EPSILON/B[1]);
-
-	scrividati(0.0,A,B,AMax,AMin,BMax,BMin,funzioni_ottiche);
 
 	double dl=0.;
-	double lunghezza_accumulata=0.;
-	double *alpha = new double[2];
-	double *beta = new double[2];
-	double *aminmax = new double[2];
-	double *bminmax = new double[2];
-
-	for (int i = 0; i < 2; i++) alpha[i]=beta[i]=aminmax[i]=bminmax[i]=0.;
+	double lunghezza_accumulata=0.01;
 
 	S=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,N_STEP);
 	for (int i=0;i<contatore;i++)
@@ -485,13 +481,19 @@ for (int i=0;i<4;i++)
 			fprintf(matrici_iniziali,"\n#Drift #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Drift #%d, dl = %f",i,dl);
 			fprintf(outputDEBUG,"\n#Drift #%d, dl = %f, L_finale = %f",i,dl,lunghezza_accumulata+lunghezza[i]);
-			for (;S<=lunghezza_accumulata+lunghezza[i];S+=dl)
+			while(S<=(lunghezza_accumulata+lunghezza[i]))	
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				vett_i=pos_part(O[i],posizionePart,vett_i,S);
-				F=assi_ellissi(F,OI[i],O[i],S,alpha,beta,aminmax,bminmax);
-				scrividati(S,alpha,beta,aminmax[0],aminmax[1],bminmax[0],bminmax[1],funzioni_ottiche);
+				vett_i=	prod(vett_i,O[i],S);
+				scrivi_pos_part(posizionePart,vett_i,S);
+				F=simil(F,OI[i],O[i]);
+				alpha=optics(F,FOC);
+				beta=optics(F,DEFOC);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(beta,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
@@ -499,15 +501,18 @@ for (int i=0;i<4;i++)
 		{
 			fprintf(matrici_iniziali,"\n#Foc. #%d, dl = %f",i,dl);			
 			fprintf(funzioni_ottiche,"\n#Foc. #%d, dl = %f",i,dl);
-			while (S<=(lunghezza_accumulata+lunghezza[i]))
+			while(S<=(lunghezza_accumulata+lunghezza[i]))	
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				
-				vett_i=pos_part(Fx[i],posizionePart,vett_i,S);
-				
-				F=assi_ellissi(F,FxI[i],Fx[i],S,alpha,beta,aminmax,bminmax);
-				scrividati(S,alpha,beta,aminmax[0],aminmax[1],bminmax[0],bminmax[1],funzioni_ottiche);
+				vett_i=	prod(vett_i,Fx[i],S);
+				scrivi_pos_part(posizionePart,vett_i,S);
+				F=simil(F,FxI[i],Fx[i]);
+				alpha=optics(F,FOC);
+				beta=optics(F,DEFOC);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(beta,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -520,11 +525,14 @@ for (int i=0;i<4;i++)
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				
-				vett_i=pos_part(Dx[i],posizionePart,vett_i,S);
-				
-				F=assi_ellissi(F,DxI[i],Dx[i],S,alpha,beta,aminmax,bminmax);
-				scrividati(S,alpha,beta,aminmax[0],aminmax[1],bminmax[0],bminmax[1],funzioni_ottiche);
+				vett_i=	prod(vett_i,Dx[i],S);
+				scrivi_pos_part(posizionePart,vett_i,S);
+				F=simil(F,DxI[i],Dx[i]);
+				alpha=optics(F,FOC);
+				beta=optics(F,DEFOC);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(beta,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
