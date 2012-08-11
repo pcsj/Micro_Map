@@ -44,7 +44,7 @@ using namespace std;
 
 int dsMap(double ,double, int);
 
-double *prod(double *,vector< vector <double> > ,double );
+void prod(double *,vector< vector <double> > ,double );
 
 double *optics(vector< vector <double> > ,int );
 
@@ -58,7 +58,7 @@ vector< vector <double> >  drift (vector< vector <double> > , double , FILE * ,i
 
 void scrivimatr2D (vector< vector <double> > , FILE * );
 
-void scrividati (double , double [] , double [], double , double , double , double , FILE * );
+void scrividati (double , double * , double *, double *, double *, FILE * );
 
 void inizializza3D(double ***,int , int );
 

@@ -1,15 +1,16 @@
 
 #include "FODO_sing_part.h"
 
-int dsMap(double L,double lunghezzatotale, int n_step)
+
+int dsMap(double L, double lunghezzatotale, int n_step)
 {
 	double ds = lunghezzatotale/n_step;
-	int n_p;
-	n_p= (int) floor(L/ds);
+	int n_p = (int) floor(L/ds);
 	return n_p;
 }
 
-double *prod(double * A,vector< vector <double> > N,double S)
+
+void prod(double * A, vector< vector <double> > N, double S)
 {
 	double *H = new double[4];
 	for (int i=0; i<4; i++) H[i] = 0.0;
@@ -17,26 +18,30 @@ double *prod(double * A,vector< vector <double> > N,double S)
 	for (int i=0; i<4; i++)
 		for (int j=0; j<4; j++)
 			H[i] += A[j] * N[i][j];
+
 	for (int i=0; i<4; i++)
 		A[i]=H[i];
+
+#ifdef DEBUG
 	printf("S = %f\nx = %f\np_x = %f\ny = %f\np_y = %f\n",S,A[0],A[1],A[2],A[3]);
-	return A;
+#endif
 }
+
 
 double *optics(vector< vector <double> > N,int i)
 {
-	double  oem,s,*A=new double[2];
-	oem=acos((N[i][i]+N[i+1][i+1])*0.5);
-	s=sin(oem);
+	double omega, s, *A=new double[2];
+	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
+	s=sin(omega);
 	
 	if ( s*(N[i][i+1]) < 0.) s=-s;
 	
-	A[0]= (N[i][i] - cos(oem)) / s;
+	A[0]= (N[i][i] - cos(omega)) / s;
 	A[1]= N[i][i+1] / s;
 
 #ifdef DEBUG
 	printf("\nN[%i][%i] = %f\nN[%i][%i] = %f",i,i,N[i][i],i+1,i+1,N[i+1][i+1]);
-	printf("\nomega = %f",oem);
+	printf("\nomega = %f",omega);
 	printf("\nsin(omega) = %f",s);
 	printf("\nA[0] = %f\nA[1] = %f",A[0],A[1]);
 	printf("\n");
@@ -45,10 +50,12 @@ double *optics(vector< vector <double> > N,int i)
 	return A;
 }
 
+
 vector< vector <double> > prodo(vector< vector <double> > A, vector< vector <double> > B, int dimensione) 
-	{
+{
 	vector <vector <double> > H(4,vector<double>(4,0));
 
+#ifdef DEBUG
 	printf("\n");
 	printf("prima ciclo prodo\n");
 		for(int k=0; k < 4; k++)
@@ -63,6 +70,7 @@ vector< vector <double> > prodo(vector< vector <double> > A, vector< vector <dou
 			for(int j=0; j < 4; j++) printf("%+12.8f  ", B[k][j]);
 		}
 	printf("\n");
+#endif
 
 	for (int i=0; i<dimensione; i++)
 		for (int j=0; j<dimensione; j++) 
@@ -72,7 +80,8 @@ vector< vector <double> > prodo(vector< vector <double> > A, vector< vector <dou
 	for (int a=0;a<dimensione;a++)
 		for (int i=0;i<dimensione;i++)
 			A[a][i]=H[a][i];
-			
+	
+#ifdef DEBUG
 	printf("\n");
 	printf("dopo ciclo prodo\n");
 		for(int k=0; k < 4; k++)
@@ -81,90 +90,100 @@ vector< vector <double> > prodo(vector< vector <double> > A, vector< vector <dou
 			for(int j=0; j < 4; j++) printf("%+12.8f  ", A[k][j]);
 		}
 	printf("\n");
+#endif
 
 	return A;
+}
+
+
+vector< vector <double> >  defocusing (vector< vector <double> > M, double d1, double S, FILE * file, int contatore)
+{
+	M[0][0]=M[1][1]=cosh(d1*S);
+	M[0][1]=sinh(d1*S)/d1;
+	M[1][0]=sinh(d1*S)*d1;
+	M[2][2]=M[3][3]=cos(d1*S);
+	M[2][3]=sin(d1*S)/d1;
+	M[3][2]=-sin(d1*S)*d1;
+
+#ifdef DEBUG
+	fprintf(file,"\nMATRICE DEFOC. dentro defocusing N # %d", contatore);
+	for(int k=0; k < 4; k++)
+	{
+		fprintf(file,"\n");
+		for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
 	}
+#endif
 
-vector< vector <double> >  defocusing (vector< vector <double> > M, double d1, double S, FILE * file,int contatore)
-		{
-			M[0][0]=M[1][1]=cosh(d1*S);
-			M[0][1]=sinh(d1*S)/d1;
-			M[1][0]=sinh(d1*S)*d1;
-			M[2][2]=M[3][3]=cos(d1*S);
-			M[2][3]=sin(d1*S)/d1;
-			M[3][2]=-sin(d1*S)*d1;
+	return M;
+}
+
+
+vector< vector <double> >  focusing (vector< vector <double> > M, double d1, double S, FILE * file, int contatore)
+{
+	M[0][0]=M[1][1]=cos(d1*S);
+	M[0][1]=sin(d1*S)/d1;
+	M[1][0]=-sin(d1*S)*d1;
+	M[2][2]=M[3][3]=cosh(d1*S);
+	M[2][3]=sinh(d1*S)/d1;
+	M[3][2]=sinh(d1*S)*d1;	
 
 #ifdef DEBUG
-			fprintf(file,"\nMATRICE DEFOC. dentro defocusing N # %d", contatore);
-			for(int k=0; k < 4; k++)
-			{
-				fprintf(file,"\n");
-				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
-			}
+	fprintf(file,"\nMATRICE FOC. dentro focusing N # %d", contatore);		
+	for(int k=0; k < 4; k++)
+	{
+		fprintf(file,"\n");
+		for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
+	}
 #endif
-			return M;
-		}
 
-vector< vector <double> >  focusing (vector< vector <double> > M, double d1, double S, FILE * file,int contatore)
-		{
-			M[0][0]=M[1][1]=cos(d1*S);
-			M[0][1]=sin(d1*S)/d1;
-			M[1][0]=-sin(d1*S)*d1;
-			M[2][2]=M[3][3]=cosh(d1*S);
-			M[2][3]=sinh(d1*S)/d1;
-			M[3][2]=sinh(d1*S)*d1;	
+	return M;
+}
+
+
+vector< vector <double> >  drift (vector< vector <double> > M, double S, FILE * file, int contatore)
+{
+	M[0][0]=M[1][1]=M[2][2]=M[3][3]=1.;
+	M[0][1]=M[2][3]=S;
 
 #ifdef DEBUG
-			fprintf(file,"\nMATRICE FOC. dentro focusing N # %d", contatore);		
-			for(int k=0; k < 4; k++)
-			{
-				fprintf(file,"\n");
-				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
-			}
+	fprintf(file,"\nMATRICE DRIFT dentro drift N # %d", contatore);
+	for(int k=0; k < 4; k++)
+	{
+		fprintf(file,"\n");
+		for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
+	}
 #endif
-			return M;
-		}
 
-vector< vector <double> >  drift (vector< vector <double> > M, double S, FILE * file,int contatore)
-		{
-			M[0][0]=M[1][1]=M[2][2]=M[3][3]=1.;
-			M[0][1]=M[2][3]=S;
+	return M;
+}
 
-#ifdef DEBUG
-			fprintf(file,"\nMATRICE DRIFT dentro drift N # %d", contatore);
-			for(int k=0; k < 4; k++)
-			{
-				fprintf(file,"\n");
-				for(int j=0; j < 4; j++) fprintf(file,"%+12.8f  ", M[k][j]);
-			}
-#endif
-			return M;
-		}
 
 void scrivimatr2D (vector< vector <double> > M, FILE * output2)
-	{
+{
 	for(int k=0; k < 4; k++)
-		{
+	{
 		fprintf(output2,"\n");
 		for(int j=0; j < 4; j++) fprintf(output2,"%+12.8f  ", M[k][j]);
-		}
 	}
+}
 
-void scrividati (double s, double *A, double *B,double *AMaxMin, double *BMaxMin, FILE * file)
-	{
-		fprintf(file,"\n %+7.4f",s);
-		fprintf(file," %+10.5f",A[1]);
-		fprintf(file," %+10.5f",B[1]);
-		fprintf(file," %+10.5f",A[0]);
-		fprintf(file," %+10.5f",B[0]);
-		fprintf(file," %+10.5f",AMaxMin[1]);
-		fprintf(file," %+10.5f",BMaxMin[1]);
-		fprintf(file," %+10.5f",AMaxMin[0]);
-		fprintf(file," %+10.5f",BMaxMin[0]);
-	}
 
-void inizializza3D(double ***M,int a, int dimensione)
-	{
+void scrividati (double s, double *A, double *B, double *AMaxMin, double *BMaxMin, FILE * file)
+{
+	fprintf(file,"\n %+7.4f",s);
+	fprintf(file," %+10.5f",A[1]);
+	fprintf(file," %+10.5f",B[1]);
+	fprintf(file," %+10.5f",A[0]);
+	fprintf(file," %+10.5f",B[0]);
+	fprintf(file," %+10.5f",AMaxMin[1]);
+	fprintf(file," %+10.5f",BMaxMin[1]);
+	fprintf(file," %+10.5f",AMaxMin[0]);
+	fprintf(file," %+10.5f",BMaxMin[0]);
+}
+
+
+void inizializza3D(double ***M, int a, int dimensione)
+{
 	M= new double**[a];
 	for (int kk=0; kk < dimensione; kk++)
 	{
@@ -176,18 +195,19 @@ void inizializza3D(double ***M,int a, int dimensione)
 		for (int i = 0; i < dimensione; i++)
 			for (int j = 0; j<dimensione; j++)
 				M[k][i][j]=0.0;
-	}
+}
+
 
 void inizializza2D(double **M, int dimensione)
-	{
+{
 	M= new double*[dimensione];
 	for (int kk=0; kk < dimensione; kk++)
 		M[kk] = new double[dimensione];
 	
-		for (int i = 0; i < dimensione; i++)
-			for (int j = 0; j<dimensione; j++)
-				M[i][j]=0.0;
-	}
+	for (int i = 0; i < dimensione; i++)
+		for (int j = 0; j<dimensione; j++)
+			M[i][j]=0.0;
+}
 
 void scrivi_pos_part(FILE * posizionePart,double *vett_i, double S)
 {
@@ -210,6 +230,7 @@ vector< vector <double> > simil(vector< vector <double> > F,vector< vector <doub
 	for (int i=0;i<4;i++)
 		for (int j=0;j<4;j++) 
 			F[i][j]=K[i][j];
+
 	return F;
 }
 
@@ -242,7 +263,12 @@ int main()
 	ifstream parametri;
 	parametri.open("parametri.txt");
 	fallita_lettura=parametri.fail();
-	if (fallita_lettura) {printf("Impossibile aprire parametri.txt\n");exit(204);}
+	if (fallita_lettura)
+	{
+		printf("Impossibile aprire parametri.txt\n");
+		exit(204);
+	}
+
 	do
 	{
 		parametri >> utile_per_contare;
@@ -264,11 +290,15 @@ int main()
 		parametri >> elemento[i];
 		parametri >> gradiente[i];
 		parametri >> lunghezza[i];
+#ifdef DEBUG
 		printf("tipo elemento: %c, gradiente: %f, lunghezza: %f\n", elemento[contatore], gradiente[contatore], lunghezza[contatore]);
+#endif
 		contatore++;
 	}
 
+#ifdef DEBUG
 	printf("contatore: %d",contatore);
+#endif
 
 	vector <vector <double> > I(4,vector<double>(4,0.0));
 	vector <vector <double> > K(4,vector<double>(4,0.0));
@@ -285,30 +315,34 @@ int main()
 	double *f1 =new double [contatore];
 	double *d1 =new double [contatore];
 	for (int i=0;i<contatore;i++)
-		{
+	{
 		if (elemento[i]=='F')
-		f1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
+			f1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
 		if (elemento[i]=='D')
-		d1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
-		}
+			d1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
+	}
 
+#ifdef DEBUG
 	for (int i=0;i<contatore;i++)
-		{
+	{
 		fprintf(outputDEBUG,"\ngrad. foc.    %+20.10f ", f1[i]*f1[i]);
 		fprintf(outputDEBUG,"\ngrad. defoc.  %+20.10f ", d1[i]*d1[i]);
-		}
+	}
+#endif
 
 	for (int i=0;i<contatore;i++)
-		{
+	{
 		if (elemento[i]=='F')
-		Fx[i]=focusing(Fx[i],f1[i],lunghezza[i],matrici_iniziali,i);
+			Fx[i]=focusing(Fx[i],f1[i],lunghezza[i],matrici_iniziali,i);
 		else if (elemento[i]=='D')
-		Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i],matrici_iniziali,i);
+			Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i],matrici_iniziali,i);
 		else if (elemento[i]=='O')
-		O[i]=drift(O[i],lunghezza[i],matrici_iniziali,i);
+			O[i]=drift(O[i],lunghezza[i],matrici_iniziali,i);
+#ifdef DEBUG
 		else
-		fprintf(outputDEBUG,"Elemento[%d]= %c non riconosciuto\n", i,elemento[i]);
-		}
+			fprintf(outputDEBUG,"Elemento[%d]= %c non riconosciuto\n", i,elemento[i]);
+#endif
+	}
 
 #ifdef DEBUG
 
@@ -346,46 +380,39 @@ int main()
 //	FODO composizione matrici
 
 	vector <vector <double> > compos(4,vector<double>(4,0));
-		if (elemento[0]=='O')
-		{
-			for (int k=0; k<4; k++)
-				for (int j=0; j<4; j++)
-					compos[k][j]=O[0][k][j];
 
-		}
-		else if (elemento[0]=='F')
-		{
-			for (int k=0; k<4; k++)
-				for (int j=0; j<4; j++)
-					compos[k][j]=Fx[0][k][j];
-		}
-		else if (elemento[0]=='D')
-		{
-			for (int k=0; k<4; k++)
-				for (int j=0; j<4; j++)
-					compos[k][j]=Dx[0][k][j];
-		}
+	if (elemento[0]=='O')
+	{
+		for (int k=0; k<4; k++)
+			for (int j=0; j<4; j++)
+				compos[k][j]=O[0][k][j];
+	}
+	else if (elemento[0]=='F')
+	{
+		for (int k=0; k<4; k++)
+			for (int j=0; j<4; j++)
+				compos[k][j]=Fx[0][k][j];
+	}
+	else if (elemento[0]=='D')
+	{
+		for (int k=0; k<4; k++)
+			for (int j=0; j<4; j++)
+				compos[k][j]=Dx[0][k][j];
+	}
 
 	for (int i=1;i<contatore;i++)
 	{
 		if (elemento[i]=='O')
-		{
 			compos=prodo(O[i],compos,4);
-		}
 		else if (elemento[i]=='F')
-		{
 			compos=prodo(Fx[i],compos,4);
-		}
 		else if (elemento[i]=='D')
-		{
 			compos=prodo(Dx[i],compos,4);
-		}
-
 	}
 	
-for (int i=0;i<4;i++)
-	for(int a=0;a<4;a++)
-		F[i][a]=compos[i][a];
+	for (int i=0;i<4;i++)
+		for(int a=0;a<4;a++)
+			F[i][a]=compos[i][a];
 
 	/************************************************************************/
 
@@ -397,7 +424,7 @@ for (int i=0;i<4;i++)
 	double *aminmax = new double[2];
 	double *bminmax = new double[2];
 
-	for (int i = 0; i < 2; i++) alpha[i]=beta[i]=aminmax[i]=bminmax[i]=0.;
+	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
 	fprintf(funzioni_ottiche,"\n#   S  ");
 	fprintf(funzioni_ottiche,"      Alpha x  ");
@@ -413,7 +440,6 @@ for (int i=0;i<4;i++)
 
 	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 
-
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
 	vett_i[2]=pos_y;
@@ -425,8 +451,10 @@ for (int i=0;i<4;i++)
 	fprintf(posizionePart," %+10.5f",vett_i[2]);
 	fprintf(posizionePart," %+10.5f\n",vett_i[3]);
 	
+#ifdef DEBUG
 	fprintf(outputDEBUG, "\nFODO:");
 	scrivimatr2D(F,outputDEBUG);
+#endif
 
 /************************************************************************/
 
@@ -436,11 +464,13 @@ for (int i=0;i<4;i++)
 	for (int i = 0 ;i < contatore;i++)
 		lunghezzatotale+=lunghezza[i];
 
+#ifdef DEBUG
 	for (int i=0; i < contatore; i++)
 	{
 		fprintf(outputDEBUG,"\n#step in elemento %d = %d",i, dsMap(lunghezza[i],lunghezzatotale,N_STEP));
 	}
 	fprintf(outputDEBUG,"\n");
+#endif
 
 	double S = 0.;
 	//Calcolo MICROMAPPE per il Drift
@@ -480,12 +510,11 @@ for (int i=0;i<4;i++)
 		{
 			fprintf(matrici_iniziali,"\n#Drift #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Drift #%d, dl = %f",i,dl);
-			fprintf(outputDEBUG,"\n#Drift #%d, dl = %f, L_finale = %f",i,dl,lunghezza_accumulata+lunghezza[i]);
 			while(S<=(lunghezza_accumulata+lunghezza[i]))	
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				vett_i=	prod(vett_i,O[i],S);
+				prod(vett_i,O[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,OI[i],O[i]);
 				alpha=optics(F,FOC);
@@ -505,7 +534,7 @@ for (int i=0;i<4;i++)
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				vett_i=	prod(vett_i,Fx[i],S);
+				prod(vett_i,Fx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,FxI[i],Fx[i]);
 				alpha=optics(F,FOC);
@@ -525,7 +554,7 @@ for (int i=0;i<4;i++)
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				vett_i=	prod(vett_i,Dx[i],S);
+				prod(vett_i,Dx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,DxI[i],Dx[i]);
 				alpha=optics(F,FOC);
@@ -542,6 +571,11 @@ for (int i=0;i<4;i++)
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
-	fclose(outputDEBUG);
 	parametri.close();
+
+#ifdef DEBUG
+	fclose(outputDEBUG);
+#endif
+
 }
+
