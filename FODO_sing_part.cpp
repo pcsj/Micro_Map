@@ -240,10 +240,13 @@ vector< vector <double> > simil(vector< vector <double> > F,vector< vector <doub
 	return F;
 }
 
-void assi_ellissi(double *alpha, double *aminmax)
+double * assi_ellissi(double *alpha)
 {
-	aminmax[0] = sqrt((alpha[1])*EPSILON);
-	aminmax[1] = sqrt(((alpha[0])* (alpha[0])+1)*EPSILON / (alpha[1]));
+	double * minimi_massimi = new double[2];
+	for (int i = 0; i < 2; i++) minimi_massimi[i] = 0.0;
+	minimi_massimi[0] = sqrt((alpha[1])*EPSILON);
+	minimi_massimi[1] = sqrt(((alpha[0])* (alpha[0])+1.)*EPSILON / (alpha[1]));
+	return minimi_massimi;
 }
 
 void create_gnuplot_file(string gnuplot_filename, string run_name, double *lunghezza, int contatore, double estremo, double zmin, double zmax)
@@ -278,22 +281,15 @@ void create_gnuplot_file(string gnuplot_filename, string run_name, double *lungh
 }
 
 
-
-void Turchetti (double * A, int i, vector< vector <double> > O)
+#ifdef TURK
+void optics_T (double * A, int i, vector< vector <double> > O)
 {
-	double *alpha = new double[2];
-	double *beta = new double[2];
-	for (int k = 0; k < 2; k++)
-		alpha[k]=beta[k]=0.0;
+	double alpha = A[0], beta = A[1];
 
-	alpha[0] = A[0];
-	beta[0] = A[1];
-	alpha[1] = alpha[0] - (O[i][i]*O[i+1][i] * beta[0])  +  (2.*O[i+1][i]*O[i][i+1] * alpha[0])  -  (1./beta[0]) * O[i][i+1]*O[i+1][i+1] * (1. - alpha[0]*alpha[0]);
-	beta[1]= pow(O[i][i],2.) * beta[0]  - 2.*O[i][i]*O[i][i+1] * alpha[0]  -  (1./beta[0]) * pow(O[i][i+1],2.) * (1. - (alpha[0]*alpha[0]));
-	A[0]=alpha[1]; 
-	A[1]=beta[1];
+	A[0] = alpha - ((O[i][i]) * (O[i+1][i]) * beta)  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha)  -  (1./beta) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha * alpha);
+	A[1]= (O[i][i]) * (O[i][i]) * beta  - 2. * (O[i][i]) * (O[i][i+1]) * alpha  -  (1./beta) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha * alpha));
 }
-
+#endif
 
 
 int main() 
@@ -308,7 +304,7 @@ int main()
 	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
 
 #ifdef TURK
-	FILE * funzioni_otticheturk=fopen("Funzioni_Ottiche_TURCHETTI.txt","w");
+	FILE * funzioni_otticheturk=fopen("Funzioni_Ottiche_T.txt","w");
 #endif
 
 #ifdef DEBUG
@@ -504,11 +500,19 @@ int main()
 
 	alpha=optics(F,FOC);
 	beta=optics(F,DEFOC);
-	
-	assi_ellissi(alpha,aminmax);
-	assi_ellissi(beta,bminmax);
-
+	aminmax = assi_ellissi(alpha);
+	bminmax = assi_ellissi(beta);
 	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+
+#ifdef TURK
+	// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
+	// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
+	alphaturk=optics(F,FOC);
+	betaturk=optics(F,DEFOC);
+	aminmaxturk = assi_ellissi(alpha);
+	bminmaxturk = assi_ellissi(beta);
+	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
+#endif
 
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
@@ -589,14 +593,16 @@ int main()
 				F=simil(F,OI[i],O[i]);
 				alpha=optics(F,FOC);
 				beta=optics(F,DEFOC);
-				assi_ellissi(alpha,aminmax);
-				assi_ellissi(beta,bminmax);
+				aminmax = assi_ellissi(alpha);
+				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 			#ifdef TURK
-				Turchetti(alphaturk,FOC,O[i]);
-				Turchetti(betaturk,DEFOC,O[i]);
-				assi_ellissi(alphaturk,aminmaxturk);
-				assi_ellissi(alphaturk,bminmaxturk);
+//				optics_T(alphaturk,FOC,O[i]);
+//				optics_T(betaturk,DEFOC,O[i]);
+				optics_T(alphaturk,FOC,F);
+				optics_T(betaturk,DEFOC,F);
+				aminmaxturk = assi_ellissi(alphaturk);
+				bminmaxturk = assi_ellissi(betaturk);
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
 			#endif 
 				S+=dl;
@@ -616,14 +622,16 @@ int main()
 				F=simil(F,FxI[i],Fx[i]);
 				alpha=optics(F,FOC);
 				beta=optics(F,DEFOC);
-				assi_ellissi(alpha,aminmax);
-				assi_ellissi(beta,bminmax);
+				aminmax = assi_ellissi(alpha);
+				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 			#ifdef TURK
-				Turchetti(alphaturk,FOC,Fx[i]);
-				Turchetti(betaturk,DEFOC,Fx[i]);
-				assi_ellissi(alphaturk,aminmaxturk);
-				assi_ellissi(alphaturk,bminmaxturk);
+//				optics_T(alphaturk,FOC,Fx[i]);
+//				optics_T(betaturk,DEFOC,Fx[i]);
+				optics_T(alphaturk,FOC,F);
+				optics_T(betaturk,DEFOC,F);
+				aminmaxturk = assi_ellissi(alphaturk);
+				bminmaxturk = assi_ellissi(betaturk);
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
 			#endif
 				S+=dl;
@@ -643,14 +651,16 @@ int main()
 				F=simil(F,DxI[i],Dx[i]);
 				alpha=optics(F,FOC);
 				beta=optics(F,DEFOC);
-				assi_ellissi(alpha,aminmax);
-				assi_ellissi(beta,bminmax);
+				aminmax = assi_ellissi(alpha);
+				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 			#ifdef TURK
-				Turchetti(alphaturk,FOC,Dx[i]);
-				Turchetti(betaturk,DEFOC,Dx[i]);
-				assi_ellissi(alphaturk,aminmaxturk);
-				assi_ellissi(alphaturk,bminmaxturk);
+//				optics_T(alphaturk,FOC,Dx[i]);
+//				optics_T(betaturk,DEFOC,Dx[i]);
+				optics_T(alphaturk,FOC,F);
+				optics_T(betaturk,DEFOC,F);
+				aminmaxturk = assi_ellissi(alphaturk);
+				bminmaxturk = assi_ellissi(betaturk);
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
 			#endif 
 				S+=dl;
@@ -662,7 +672,7 @@ int main()
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_Turchetti", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);

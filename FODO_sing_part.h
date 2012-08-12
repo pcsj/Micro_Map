@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #define DEBUG
-#define TURK
+//#define TURK
 
 #include <cstdio> 
 #include <cstdlib>
@@ -18,10 +18,10 @@
 
 #define EPSILON				1.0
 #define ENERGIA				30.0
-#define CHARGE 1.602176565e-19
-#define MP_KG 1.6726231e-27
-#define MP_MEV 938.272013
-#define SPEED_OF_LIGHT 2.99792458e8
+#define CHARGE				1.602176565e-19
+#define MP_KG				1.6726231e-27
+#define MP_MEV				938.272013
+#define SPEED_OF_LIGHT		2.99792458e8
 #define FOC					0
 #define DEFOC				2
 #define N_STEP				100
@@ -69,10 +69,11 @@ void scrivi_pos_part(FILE * ,double *,double );
 
 vector< vector <double> >  simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 
-void assi_ellissi(double *,double*);
+double * assi_ellissi(double *);
 
 void create_gnuplot_file(string , string , double *, int , double , double , double );
 
-void Turchetti (double * , int , vector< vector <double> > );
-
+#ifdef TURK
+void optics_T (double * , int , vector< vector <double> > );
+#endif
 
