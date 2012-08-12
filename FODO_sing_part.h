@@ -69,10 +69,10 @@ void scrivi_pos_part(FILE * ,double *,double );
 
 vector< vector <double> >  simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 
-double *assi_ellissi(double *,double*);
+void assi_ellissi(double *,double*);
 
 void create_gnuplot_file(string , string , double *, int , double , double , double );
 
-double * Turchetti (double * , int , vector< vector <double> > );
+void Turchetti (double * , int , vector< vector <double> > );
 
 
