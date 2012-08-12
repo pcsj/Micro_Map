@@ -32,7 +32,7 @@ double *optics(vector< vector <double> > N, int i)
 {
 	double omega, s, *A=new double[2];
 	for (int j = 0; j < 2; j++) A[j] = 0.;
-	if (fabs(N[i][i]+N[i+1][i+1]) > 1.)
+	if (fabs((N[i][i]+N[i+1][i+1])*0.5) > 1.)
 	{
 		printf("Errore impossibile calcolare le funzioni ottiche!\n");
 		return A;		// ritorna zero
