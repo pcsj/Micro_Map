@@ -28,9 +28,15 @@ void prod(double * A, vector< vector <double> > N, double S)
 }
 
 
-double *optics(vector< vector <double> > N,int i)
+double *optics(vector< vector <double> > N, int i)
 {
 	double omega, s, *A=new double[2];
+	for (int j = 0; j < 2; j++) A[j] = 0.;
+	if (fabs(N[i][i]+N[i+1][i+1]) > 1.)
+	{
+		printf("Errore impossibile calcolare le funzioni ottiche..");
+		return A;		// ritorna zero
+	}
 	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
 	s=sin(omega);
 	
@@ -241,6 +247,53 @@ double * assi_ellissi(double *alpha, double *aminmax)
 	return aminmax;
 }
 
+void create_gnuplot_file(string gnuplot_filename, string run_name, double *lunghezza, int contatore, double estremo, double zmin, double zmax)
+{
+	ofstream gnuplot_file;
+	double lunghezza_percorsa=0.;
+	gnuplot_file.open(gnuplot_filename.c_str());
+	gnuplot_file << "#!/gnuplot" << endl;
+	gnuplot_file << "FILE=\"" << run_name << ".txt\"" << endl;
+	gnuplot_file << "set terminal png enhanced 15" << endl;
+	gnuplot_file << "set output \"graph_" << run_name << ".png\"" << endl;
+	gnuplot_file << "set xrange[" << zmin << ":" << zmax << "]" << endl;
+	gnuplot_file << "#set yrange[" << -estremo << ":" << estremo << "]" << endl;
+	gnuplot_file << "set title  \""<< run_name <<" \"" << endl;
+	gnuplot_file << "set xlabel \"z (m)\"" << endl;
+	if (run_name[0]=='F')
+	gnuplot_file << "set ylabel \"Funz. Ottiche x,y\"" << endl;
+	else if (run_name[0]=='P')
+	gnuplot_file << "set ylabel \"x,y (m)\"" << endl;
+	else exit(204);
+	for (int i = 0; i < contatore; i++)
+	{
+		lunghezza_percorsa+=lunghezza[i];
+		gnuplot_file << "set arrow from " << lunghezza_percorsa<< "," << -5 << " to "<< lunghezza_percorsa << ","<< 5 << " nohead lc rgb \"black\" lw 1" << endl;
+	}
+	gnuplot_file << "plot FILE u 1:2 w lines lt 1 lc rgb \"red\" lw 1 t \"x\",\\" << endl;
+	gnuplot_file << "FILE u 1:4 w lines lt 1 lc rgb \"blue\" lw 1 t \"y\",\\" << endl;
+	gnuplot_file << "FILE u 1:3 w lines lt 1 lc rgb \"orange\" lw 1 t \"p_x\",\\" << endl;
+	gnuplot_file << "FILE u 1:5 w lines lt 1 lc rgb \"dark-green\" lw 1 t \"p_y\"" << endl;
+
+	gnuplot_file.close();
+}
+
+
+
+double * Turchetti (double * A, int i, vector< vector <double> > O)
+{
+	double *alpha = new double[2];
+	double *beta = new double[2];
+	for (int k = 0; k < 2; k++)
+		alpha[k]=beta[k]=0.0;
+
+	alpha[0] = A[0];
+	beta[0] = A[1];
+	alpha[1] = alpha[0] - (O[i][i]*O[i+1][i] * beta[0])  +  (2.*O[i+1][i]*O[i][i+1] * alpha[0])  -  (1./beta[0]) * O[i][i+1]*O[i+1][i+1] * (1. - alpha[0]*alpha[0]);	beta[1]= pow(O[i][i],2.) * beta[0]  - 2.*O[i][i]*O[i][i+1] * alpha[0]  -  (1./beta[0]) * pow(O[i][i+1],2.) * (1. - (alpha[0]*alpha[0]));	A[0]=alpha[1]; 	A[1]=beta[1];
+	return A;
+}
+
+
 
 int main() 
 { 
@@ -252,6 +305,10 @@ int main()
 	FILE * funzioni_ottiche=fopen("Funzioni_Ottiche.txt","w");
 	FILE * matrici_iniziali=fopen("Matrici_Iniziali.txt","w");
 	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
+
+#ifdef TURK
+	FILE * funzioni_otticheturk=fopen("Funzioni_Ottiche_TURCHETTI.txt","w");
+#endif
 
 #ifdef DEBUG
 	FILE * outputDEBUG=fopen("DEBUG.txt","w");
@@ -419,18 +476,30 @@ int main()
 	// Calcolo Funzioni OTTICHE
 
 	double *vett_i=new double[4];
+
 	double *alpha = new double[2];
 	double *beta = new double[2];
 	double *aminmax = new double[2];
 	double *bminmax = new double[2];
+#ifdef TURK
+	double *alphaturk = new double[2];
+	double *betaturk = new double[2];
+	double *aminmaxturk = new double[2];
+	double *bminmaxturk = new double[2];
+	for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
+#endif
 
 	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
-	fprintf(funzioni_ottiche,"\n#   S  ");
-	fprintf(funzioni_ottiche,"      Alpha x  ");
-	fprintf(funzioni_ottiche,"   Beta x ");
-	fprintf(funzioni_ottiche,"  Alpha y  ");
-	fprintf(funzioni_ottiche,"  Beta y ");
+	fprintf(funzioni_ottiche,"\n#%+7c",'S');
+	fprintf(funzioni_ottiche,"%+10.8s","Alpha x");
+	fprintf(funzioni_ottiche,"%+10.7s","Beta x");
+	fprintf(funzioni_ottiche,"%+12.8s","Alpha y");
+	fprintf(funzioni_ottiche,"%+10.7s","Beta y");
+	fprintf(funzioni_ottiche,"%+10s","x");
+	fprintf(funzioni_ottiche,"%+11s","p_x");
+	fprintf(funzioni_ottiche,"%+11s","y");
+	fprintf(funzioni_ottiche,"%+11s","p_y");
 
 	alpha=optics(F,FOC);
 	beta=optics(F,DEFOC);
@@ -522,6 +591,13 @@ int main()
 				aminmax=assi_ellissi(alpha,aminmax);
 				bminmax=assi_ellissi(beta,bminmax);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+			#ifdef TURK
+				alpha=Turchetti(alpha,FOC,O[i]);
+				beta=Turchetti(beta,DEFOC,O[i]);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(alpha,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_otticheturk);
+			#endif 
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -542,6 +618,13 @@ int main()
 				aminmax=assi_ellissi(alpha,aminmax);
 				bminmax=assi_ellissi(beta,bminmax);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+			#ifdef TURK
+				alpha=Turchetti(alpha,FOC,Fx[i]);
+				beta=Turchetti(beta,DEFOC,Fx[i]);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(alpha,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_otticheturk);
+			#endif
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -562,16 +645,29 @@ int main()
 				aminmax=assi_ellissi(alpha,aminmax);
 				bminmax=assi_ellissi(beta,bminmax);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+			#ifdef TURK
+				alpha=Turchetti(alpha,FOC,Dx[i]);
+				beta=Turchetti(beta,DEFOC,Dx[i]);
+				aminmax=assi_ellissi(alpha,aminmax);
+				bminmax=assi_ellissi(alpha,bminmax);
+				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_otticheturk);
+			#endif 
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
 	}
-		
+
+
+	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_Turchetti", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
 	parametri.close();
+
+#ifdef TURK
+	fclose(funzioni_otticheturk);
+#endif
 
 #ifdef DEBUG
 	fclose(outputDEBUG);
