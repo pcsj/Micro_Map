@@ -34,7 +34,7 @@ double *optics(vector< vector <double> > N, int i)
 	for (int j = 0; j < 2; j++) A[j] = 0.;
 	if (fabs(N[i][i]+N[i+1][i+1]) > 1.)
 	{
-		printf("Errore impossibile calcolare le funzioni ottiche..");
+		printf("Errore impossibile calcolare le funzioni ottiche!\n");
 		return A;		// ritorna zero
 	}
 	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
@@ -289,7 +289,10 @@ double * Turchetti (double * A, int i, vector< vector <double> > O)
 
 	alpha[0] = A[0];
 	beta[0] = A[1];
-	alpha[1] = alpha[0] - (O[i][i]*O[i+1][i] * beta[0])  +  (2.*O[i+1][i]*O[i][i+1] * alpha[0])  -  (1./beta[0]) * O[i][i+1]*O[i+1][i+1] * (1. - alpha[0]*alpha[0]);	beta[1]= pow(O[i][i],2.) * beta[0]  - 2.*O[i][i]*O[i][i+1] * alpha[0]  -  (1./beta[0]) * pow(O[i][i+1],2.) * (1. - (alpha[0]*alpha[0]));	A[0]=alpha[1]; 	A[1]=beta[1];
+	alpha[1] = alpha[0] - (O[i][i]*O[i+1][i] * beta[0])  +  (2.*O[i+1][i]*O[i][i+1] * alpha[0])  -  (1./beta[0]) * O[i][i+1]*O[i+1][i+1] * (1. - alpha[0]*alpha[0]);
+	beta[1]= pow(O[i][i],2.) * beta[0]  - 2.*O[i][i]*O[i][i+1] * alpha[0]  -  (1./beta[0]) * pow(O[i][i+1],2.) * (1. - (alpha[0]*alpha[0]));
+	A[0]=alpha[1]; 
+	A[1]=beta[1];
 	return A;
 }
 
@@ -491,15 +494,15 @@ int main()
 
 	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
-	fprintf(funzioni_ottiche,"\n#%+7c",'S');
-	fprintf(funzioni_ottiche,"%+10.8s","Alpha x");
-	fprintf(funzioni_ottiche,"%+10.7s","Beta x");
-	fprintf(funzioni_ottiche,"%+12.8s","Alpha y");
-	fprintf(funzioni_ottiche,"%+10.7s","Beta y");
-	fprintf(funzioni_ottiche,"%+10s","x");
-	fprintf(funzioni_ottiche,"%+11s","p_x");
-	fprintf(funzioni_ottiche,"%+11s","y");
-	fprintf(funzioni_ottiche,"%+11s","p_y");
+	fprintf(funzioni_ottiche,"\n#%7c",'S');
+	fprintf(funzioni_ottiche,"%10.8s","Alpha x");
+	fprintf(funzioni_ottiche,"%10.7s","Beta x");
+	fprintf(funzioni_ottiche,"%12.8s","Alpha y");
+	fprintf(funzioni_ottiche,"%10.7s","Beta y");
+	fprintf(funzioni_ottiche,"%10s","x");
+	fprintf(funzioni_ottiche,"%11s","p_x");
+	fprintf(funzioni_ottiche,"%11s","y");
+	fprintf(funzioni_ottiche,"%11s","p_y");
 
 	alpha=optics(F,FOC);
 	beta=optics(F,DEFOC);
@@ -659,7 +662,10 @@ int main()
 	}
 
 
-	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_Turchetti", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_Turchetti", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
