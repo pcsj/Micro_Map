@@ -35,7 +35,7 @@ double *optics(vector< vector <double> > N, int i)
 	if (fabs((N[i][i]+N[i+1][i+1])*0.5) > 1.)
 	{
 		printf("Errore impossibile calcolare le funzioni ottiche!\n");
-		return A;		// ritorna zero
+		return A;		// ritorna zero e basta: al limite dobbiamo lavorarci su in altro modo, fare gli ifndef non funziona perche' sono macro per il preprocessore, non variabili valutate in fase di runtime!
 	}
 	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
 	s=sin(omega);
@@ -672,7 +672,9 @@ int main()
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-	create_gnuplot_file( "Funzioni_Ottiche_Tuchetti.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+#ifdef TURK
+	create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+#endif
 
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
