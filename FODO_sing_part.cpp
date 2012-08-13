@@ -509,8 +509,9 @@ int main()
 	fprintf(funzioni_ottiche,"%11s","y");
 	fprintf(funzioni_ottiche,"%11s","p_y");
 	}
+	else {fclose(funzioni_ottiche);
+	fclose(funzioni_ottiche_t);}
 
-	if (fallito&&fallito1)
 	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 
 	// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
@@ -522,7 +523,6 @@ int main()
 		aminmaxturk[i]=aminmax[i];
 		bminmaxturk[i]=bminmax[i];
 	}
-	if (fallito&&fallito1)
 	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 
 
@@ -607,13 +607,11 @@ int main()
 				beta=optics(F,DEFOC,&fallito1);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
-				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 				alphaturk=optics_T(alphaturk,FOC,O[i]);
 				betaturk=optics_T(betaturk,DEFOC,O[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);
-				if (fallito&&fallito1)
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
@@ -634,13 +632,11 @@ int main()
 				beta=optics(F,DEFOC,&fallito1);		
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
-				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 				alphaturk=optics_T(alphaturk,FOC,Fx[i]);
 				betaturk=optics_T(betaturk,DEFOC,Fx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
-				bminmaxturk = assi_ellissi(betaturk);
-				if (fallito&&fallito1)			
+				bminmaxturk = assi_ellissi(betaturk);	
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
@@ -661,13 +657,11 @@ int main()
 				beta=optics(F,DEFOC,&fallito1);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
-				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 				alphaturk=optics_T(alphaturk,FOC,Dx[i]);
 				betaturk=optics_T(betaturk,DEFOC,Dx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
-				bminmaxturk = assi_ellissi(betaturk);
-				if (fallito&&fallito1)				
+				bminmaxturk = assi_ellissi(betaturk);		
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
@@ -677,8 +671,11 @@ int main()
 
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-	create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	if (fallito&&fallito1)
+	{
+		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+	}
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
