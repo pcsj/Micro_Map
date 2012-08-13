@@ -28,13 +28,14 @@ void prod(double * A, vector< vector <double> > N, double S)
 }
 
 
-double *optics(vector< vector <double> > N, int i)
+double *optics(vector< vector <double> > N, int i,bool * fallito)
 {
 	double omega, s, *A=new double[2];
 	for (int j = 0; j < 2; j++) A[j] = 0.;
 	if (fabs((N[i][i]+N[i+1][i+1])*0.5) > 1.)
 	{
 		printf("Errore impossibile calcolare le funzioni ottiche!\n");
+		* fallito=false;
 		return A;		// ritorna zero e basta: al limite dobbiamo lavorarci su in altro modo, fare gli ifndef non funziona perche' sono macro per il preprocessore, non variabili valutate in fase di runtime!
 	}
 	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
@@ -281,15 +282,18 @@ void create_gnuplot_file(string gnuplot_filename, string run_name, double *lungh
 }
 
 
-#ifdef TURK
-void optics_T (double * A, int i, vector< vector <double> > O)
+double *optics_T (double * A, int i, vector< vector <double> > O)
 {
-	double alpha = A[0], beta = A[1];
+	double alpha=0.;
+	double beta=0.;
+	alpha = A[0];
+	beta = A[1];
 
 	A[0] = alpha - ((O[i][i]) * (O[i+1][i]) * beta)  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha)  -  (1./beta) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha * alpha);
 	A[1]= (O[i][i]) * (O[i][i]) * beta  - 2. * (O[i][i]) * (O[i][i+1]) * alpha  -  (1./beta) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha * alpha));
+	return A;
 }
-#endif
+
 
 
 int main() 
@@ -303,9 +307,8 @@ int main()
 	FILE * matrici_iniziali=fopen("Matrici_Iniziali.txt","w");
 	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
 
-#ifdef TURK
-	FILE * funzioni_otticheturk=fopen("Funzioni_Ottiche_T.txt","w");
-#endif
+	FILE * funzioni_ottiche_t=fopen("Funzioni_Ottiche_T.txt","w");
+
 
 #ifdef DEBUG
 	FILE * outputDEBUG=fopen("DEBUG.txt","w");
@@ -478,16 +481,24 @@ int main()
 	double *beta = new double[2];
 	double *aminmax = new double[2];
 	double *bminmax = new double[2];
-#ifdef TURK
 	double *alphaturk = new double[2];
 	double *betaturk = new double[2];
 	double *aminmaxturk = new double[2];
 	double *bminmaxturk = new double[2];
+	bool fallito=true;
+	bool fallito1=true;
+
 	for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
-#endif
 
 	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
+	alpha=optics(F,FOC,&fallito);
+	beta=optics(F,DEFOC,&fallito1);
+	aminmax = assi_ellissi(alpha);
+	bminmax = assi_ellissi(beta);
+
+	if (fallito&&fallito1)
+	{
 	fprintf(funzioni_ottiche,"\n#%7c",'S');
 	fprintf(funzioni_ottiche,"%10.8s","Alpha x");
 	fprintf(funzioni_ottiche,"%10.7s","Beta x");
@@ -497,22 +508,23 @@ int main()
 	fprintf(funzioni_ottiche,"%11s","p_x");
 	fprintf(funzioni_ottiche,"%11s","y");
 	fprintf(funzioni_ottiche,"%11s","p_y");
+	}
 
-	alpha=optics(F,FOC);
-	beta=optics(F,DEFOC);
-	aminmax = assi_ellissi(alpha);
-	bminmax = assi_ellissi(beta);
+	if (fallito&&fallito1)
 	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 
-#ifdef TURK
 	// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
 	// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
-	alphaturk=optics(F,FOC);
-	betaturk=optics(F,DEFOC);
-	aminmaxturk = assi_ellissi(alpha);
-	bminmaxturk = assi_ellissi(beta);
-	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
-#endif
+	for (int i=0;i<2;i++)
+	{
+		alphaturk[i]=alpha[i];
+		betaturk[i]=beta[i];
+		aminmaxturk[i]=aminmax[i];
+		bminmaxturk[i]=bminmax[i];
+	}
+	if (fallito&&fallito1)
+	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+
 
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
@@ -591,20 +603,18 @@ int main()
 				prod(vett_i,O[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,OI[i],O[i]);
-				alpha=optics(F,FOC);
-				beta=optics(F,DEFOC);
+				alpha=optics(F,FOC,&fallito);
+				beta=optics(F,DEFOC,&fallito1);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
+				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-			#ifdef TURK
-//				optics_T(alphaturk,FOC,O[i]);
-//				optics_T(betaturk,DEFOC,O[i]);
-				optics_T(alphaturk,FOC,F);
-				optics_T(betaturk,DEFOC,F);
+				alphaturk=optics_T(alphaturk,FOC,O[i]);
+				betaturk=optics_T(betaturk,DEFOC,O[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
-			#endif 
+				if (fallito&&fallito1)
+				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -620,20 +630,18 @@ int main()
 				prod(vett_i,Fx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,FxI[i],Fx[i]);
-				alpha=optics(F,FOC);
-				beta=optics(F,DEFOC);
+				alpha=optics(F,FOC,&fallito);
+				beta=optics(F,DEFOC,&fallito1);		
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
+				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-			#ifdef TURK
-//				optics_T(alphaturk,FOC,Fx[i]);
-//				optics_T(betaturk,DEFOC,Fx[i]);
-				optics_T(alphaturk,FOC,F);
-				optics_T(betaturk,DEFOC,F);
+				alphaturk=optics_T(alphaturk,FOC,Fx[i]);
+				betaturk=optics_T(betaturk,DEFOC,Fx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
-			#endif
+				if (fallito&&fallito1)			
+				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -649,20 +657,18 @@ int main()
 				prod(vett_i,Dx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,DxI[i],Dx[i]);
-				alpha=optics(F,FOC);
-				beta=optics(F,DEFOC);
+				alpha=optics(F,FOC,&fallito);
+				beta=optics(F,DEFOC,&fallito1);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
+				if (fallito&&fallito1)
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-			#ifdef TURK
-//				optics_T(alphaturk,FOC,Dx[i]);
-//				optics_T(betaturk,DEFOC,Dx[i]);
-				optics_T(alphaturk,FOC,F);
-				optics_T(betaturk,DEFOC,F);
+				alphaturk=optics_T(alphaturk,FOC,Dx[i]);
+				betaturk=optics_T(betaturk,DEFOC,Dx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_otticheturk);
-			#endif 
+				if (fallito&&fallito1)				
+				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -672,18 +678,13 @@ int main()
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-#ifdef TURK
 	create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-#endif
-
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
 	parametri.close();
 
-#ifdef TURK
-	fclose(funzioni_otticheturk);
-#endif
+	fclose(funzioni_ottiche_t);
 
 #ifdef DEBUG
 	fclose(outputDEBUG);

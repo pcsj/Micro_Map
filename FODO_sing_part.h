@@ -47,7 +47,7 @@ int dsMap(double ,double, int);
 
 void prod(double *,vector< vector <double> > ,double );
 
-double *optics(vector< vector <double> > ,int );
+double *optics(vector< vector <double> > ,int ,bool);
 
 vector< vector <double> > prodo(vector< vector <double> > , vector< vector <double> > , int );
 
@@ -73,7 +73,6 @@ double * assi_ellissi(double *);
 
 void create_gnuplot_file(string , string , double *, int , double , double , double );
 
-#ifdef TURK
-void optics_T (double * , int , vector< vector <double> > );
-#endif
+double * optics_T (double * , int , vector< vector <double> > );
+
 
