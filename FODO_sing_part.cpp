@@ -669,19 +669,25 @@ int main()
 		}
 	}
 
+	fclose(funzioni_ottiche);
+	fclose(matrici_iniziali);
+	fclose(posizionePart);
+	parametri.close();
+	fclose(funzioni_ottiche_t);
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	if (fallito&&fallito1)
 	{
 		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
+		system ("gnuplot Funzioni_Ottiche.plt");
+		system ("gnuplot Funzioni_Ottiche_T.plt");
 	}
-	fclose(funzioni_ottiche);
-	fclose(matrici_iniziali);
-	fclose(posizionePart);
-	parametri.close();
+	else	
+	{system ("del Funzioni_Ottiche.txt"); 
+	system ("del Funzioni_Ottiche_T.txt");} 
 
-	fclose(funzioni_ottiche_t);
+	system ("gnuplot Posizione.plt");
 
 #ifdef DEBUG
 	fclose(outputDEBUG);
