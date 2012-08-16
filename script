@@ -1,0 +1,18 @@
+#!/bin/bash
+INITIAL_STEP=8
+NUMBER_OF_STEPS=100
+INCREASE_STEP=0.01
+#######
+i=${INITIAL_STEP}
+for (( $((a=1)) ; $((a<=${NUMBER_OF_STEPS})) ; $((a=a+1)) ))
+do
+echo $i
+echo O       0.0     0.3 >  parametri.txt
+echo D       $i      0.2 >> parametri.txt
+echo O       0.0     0.3 >> parametri.txt
+echo F       10.0    0.2 >> parametri.txt
+./FODO_sing_part > check.txt
+mv graph_Funzioni_Ottiche.png graph_Funzioni_Ottiche_${i}.png
+mv graph_Posizione_Particelle.png graph_Posizione_Particelle_${i}.png
+i="$(echo "${i}+${INCREASE_STEP}" | bc)"
+done
