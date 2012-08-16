@@ -2,6 +2,7 @@
 
 #define DEBUG
 //#define TEST_OPTICAL_FUNCTIONS
+#define CREATE_PNG
 
 #include <cstdio> 
 #include <cstdlib>
@@ -71,7 +72,7 @@ vector< vector <double> >  simil(vector< vector <double> > ,vector< vector <doub
 
 double * assi_ellissi(double *);
 
-void create_gnuplot_file(string , string , double *, int , double , double , double );
+void create_gnuplot_file(string , string , double *, int , double , double , double , string *);
 
 double * optics_T (double * , int , vector< vector <double> > );
 
