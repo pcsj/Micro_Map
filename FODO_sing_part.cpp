@@ -281,7 +281,7 @@ void create_gnuplot_file(string gnuplot_filename, string run_name, double *lungh
 	gnuplot_file.close();
 }
 
-
+#ifdef TEST_OPTICAL_FUNCTIONS
 double *optics_T (double * A, int i, vector< vector <double> > O)
 {
 	double alpha=0.;
@@ -293,6 +293,7 @@ double *optics_T (double * A, int i, vector< vector <double> > O)
 	A[1]= (O[i][i]) * (O[i][i]) * beta  - 2. * (O[i][i]) * (O[i][i+1]) * alpha  -  (1./beta) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha * alpha));
 	return A;
 }
+#endif
 
 
 
@@ -307,8 +308,9 @@ int main()
 	FILE * matrici_iniziali=fopen("Matrici_Iniziali.txt","w");
 	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
 
+#ifdef TEST_OPTICAL_FUNCTIONS
 	FILE * funzioni_ottiche_t=fopen("Funzioni_Ottiche_T.txt","w");
-
+#endif
 
 #ifdef DEBUG
 	FILE * outputDEBUG=fopen("DEBUG.txt","w");
@@ -481,16 +483,17 @@ int main()
 	double *beta = new double[2];
 	double *aminmax = new double[2];
 	double *bminmax = new double[2];
+	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
+	bool alpha_calcolato_con_successo=true;
+	bool beta_calcolato_con_successo=true;
+
+#ifdef TEST_OPTICAL_FUNCTIONS
 	double *alphaturk = new double[2];
 	double *betaturk = new double[2];
 	double *aminmaxturk = new double[2];
 	double *bminmaxturk = new double[2];
-	bool alpha_calcolato_con_successo=true;
-	bool beta_calcolato_con_successo=true;
-
 	for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
-
-	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
+#endif
 
 	alpha=optics(F,FOC,&alpha_calcolato_con_successo);
 	beta=optics(F,DEFOC,&beta_calcolato_con_successo);
@@ -499,21 +502,21 @@ int main()
 
 	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
-	fprintf(funzioni_ottiche,"\n#%7c",'S');
-	fprintf(funzioni_ottiche,"%10.8s","Alpha x");
-	fprintf(funzioni_ottiche,"%10.7s","Beta x");
-	fprintf(funzioni_ottiche,"%12.8s","Alpha y");
-	fprintf(funzioni_ottiche,"%10.7s","Beta y");
-	fprintf(funzioni_ottiche,"%10s","x");
-	fprintf(funzioni_ottiche,"%11s","p_x");
-	fprintf(funzioni_ottiche,"%11s","y");
-	fprintf(funzioni_ottiche,"%11s","p_y");
+		fprintf(funzioni_ottiche,"\n#%7c",'S');
+		fprintf(funzioni_ottiche,"%10.8s","Alpha x");
+		fprintf(funzioni_ottiche,"%10.7s","Beta x");
+		fprintf(funzioni_ottiche,"%12.8s","Alpha y");
+		fprintf(funzioni_ottiche,"%10.7s","Beta y");
+		fprintf(funzioni_ottiche,"%10s","x");
+		fprintf(funzioni_ottiche,"%11s","p_x");
+		fprintf(funzioni_ottiche,"%11s","y");
+		fprintf(funzioni_ottiche,"%11s","p_y");
 	}
-	else {fclose(funzioni_ottiche);
-	fclose(funzioni_ottiche_t);}
 
 	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 
+
+#ifdef TEST_OPTICAL_FUNCTIONS
 	// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
 	// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
 	for (int i=0;i<2;i++)
@@ -524,7 +527,7 @@ int main()
 		bminmaxturk[i]=bminmax[i];
 	}
 	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
-
+#endif
 
 	vett_i[0]=pos_x;
 	vett_i[1]=imp_x;
@@ -608,11 +611,13 @@ int main()
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
 				alphaturk=optics_T(alphaturk,FOC,O[i]);
 				betaturk=optics_T(betaturk,DEFOC,O[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -633,11 +638,13 @@ int main()
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
 				alphaturk=optics_T(alphaturk,FOC,Fx[i]);
 				betaturk=optics_T(betaturk,DEFOC,Fx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);	
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -658,11 +665,13 @@ int main()
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
 				alphaturk=optics_T(alphaturk,FOC,Dx[i]);
 				betaturk=optics_T(betaturk,DEFOC,Dx[i]);
 				aminmaxturk = assi_ellissi(alphaturk);
 				bminmaxturk = assi_ellissi(betaturk);		
 				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -673,7 +682,10 @@ int main()
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
 	parametri.close();
+
+#ifdef TEST_OPTICAL_FUNCTIONS
 	fclose(funzioni_ottiche_t);
+#endif
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 	system ("gnuplot Posizione.plt");
@@ -681,18 +693,24 @@ int main()
 	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
 		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 		system ("gnuplot Funzioni_Ottiche.plt");
+#ifdef TEST_OPTICAL_FUNCTIONS
+		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 		system ("gnuplot Funzioni_Ottiche_T.plt");
+#endif
 	}
 	else	
 	{
 #if defined (__linux)
 		system ("rm Funzioni_Ottiche.txt"); 
+#ifdef TEST_OPTICAL_FUNCTIONS
 		system ("rm Funzioni_Ottiche_T.txt");
+#endif
 #elif defined (_WIN32) || defined (_WIN64)
 		system ("del Funzioni_Ottiche.txt"); 
+#ifdef TEST_OPTICAL_FUNCTIONS
 		system ("del Funzioni_Ottiche_T.txt");
+#endif
 #endif
 	} 
 	
