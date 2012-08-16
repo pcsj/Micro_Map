@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #define DEBUG
-//#define TURK
+
 
 #include <cstdio> 
 #include <cstdlib>

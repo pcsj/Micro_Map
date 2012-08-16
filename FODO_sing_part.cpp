@@ -28,14 +28,14 @@ void prod(double * A, vector< vector <double> > N, double S)
 }
 
 
-double *optics(vector< vector <double> > N, int i,bool * fallito)
+double *optics(vector< vector <double> > N, int i,bool * effettuato_con_successo)
 {
 	double omega, s, *A=new double[2];
 	for (int j = 0; j < 2; j++) A[j] = 0.;
 	if (fabs((N[i][i]+N[i+1][i+1])*0.5) > 1.)
 	{
 		printf("Errore impossibile calcolare le funzioni ottiche!\n");
-		* fallito=false;
+		* effettuato_con_successo=false;
 		return A;		// ritorna zero e basta: al limite dobbiamo lavorarci su in altro modo, fare gli ifndef non funziona perche' sono macro per il preprocessore, non variabili valutate in fase di runtime!
 	}
 	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
@@ -485,19 +485,19 @@ int main()
 	double *betaturk = new double[2];
 	double *aminmaxturk = new double[2];
 	double *bminmaxturk = new double[2];
-	bool fallito=true;
-	bool fallito1=true;
+	bool alpha_calcolato_con_successo=true;
+	bool beta_calcolato_con_successo=true;
 
 	for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
 
 	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
-	alpha=optics(F,FOC,&fallito);
-	beta=optics(F,DEFOC,&fallito1);
+	alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+	beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 	aminmax = assi_ellissi(alpha);
 	bminmax = assi_ellissi(beta);
 
-	if (fallito&&fallito1)
+	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
 	fprintf(funzioni_ottiche,"\n#%7c",'S');
 	fprintf(funzioni_ottiche,"%10.8s","Alpha x");
@@ -603,8 +603,8 @@ int main()
 				prod(vett_i,O[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,OI[i],O[i]);
-				alpha=optics(F,FOC,&fallito);
-				beta=optics(F,DEFOC,&fallito1);
+				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+				beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
@@ -628,8 +628,8 @@ int main()
 				prod(vett_i,Fx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,FxI[i],Fx[i]);
-				alpha=optics(F,FOC,&fallito);
-				beta=optics(F,DEFOC,&fallito1);		
+				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+				beta=optics(F,DEFOC,&beta_calcolato_con_successo);		
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
@@ -653,8 +653,8 @@ int main()
 				prod(vett_i,Dx[i],S);
 				scrivi_pos_part(posizionePart,vett_i,S);
 				F=simil(F,DxI[i],Dx[i]);
-				alpha=optics(F,FOC,&fallito);
-				beta=optics(F,DEFOC,&fallito1);
+				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+				beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 				aminmax = assi_ellissi(alpha);
 				bminmax = assi_ellissi(beta);
 				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
@@ -676,7 +676,9 @@ int main()
 	fclose(funzioni_ottiche_t);
 
 	create_gnuplot_file( "Posizione.plt", "Posizione_Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
-	if (fallito&&fallito1)
+	system ("gnuplot Posizione.plt");
+
+	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
 		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
 		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata);
@@ -684,10 +686,16 @@ int main()
 		system ("gnuplot Funzioni_Ottiche_T.plt");
 	}
 	else	
-	{system ("del Funzioni_Ottiche.txt"); 
-	system ("del Funzioni_Ottiche_T.txt");} 
-
-	system ("gnuplot Posizione.plt");
+	{
+#if defined (__linux)
+		system ("rm Funzioni_Ottiche.txt"); 
+		system ("rm Funzioni_Ottiche_T.txt");
+#elif defined (_WIN32) || defined (_WIN64)
+		system ("del Funzioni_Ottiche.txt"); 
+		system ("del Funzioni_Ottiche_T.txt");
+#endif
+	} 
+	
 
 #ifdef DEBUG
 	fclose(outputDEBUG);
