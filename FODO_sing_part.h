@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define DEBUG
+//#define DEBUG
 //#define TEST_OPTICAL_FUNCTIONS
 #define CREATE_PNG
 
@@ -17,23 +17,14 @@
 #endif
 
 
-#define EPSILON				1.0
-#define ENERGIA				30.0
 #define CHARGE				1.602176565e-19
 #define MP_KG				1.6726231e-27
 #define MP_MEV				938.272013
 #define SPEED_OF_LIGHT		2.99792458e8
 #define FOC					0
 #define DEFOC				2
-#define N_STEP				100
 
 
-
-
-#define pos_x 0.0
-#define pos_y 0.0
-#define imp_x 0.05
-#define imp_y 0.05
 
 #ifdef __linux
 #include <fenv.h>
@@ -44,36 +35,28 @@ using namespace std;
 
 
 
-int dsMap(double ,double, int);
+#ifdef DEBUG
+void						prod(double *,vector< vector <double> > ,double );
+vector< vector <double> >	defocusing (vector< vector <double> > , double , double , FILE * ,int );
+vector< vector <double> >	focusing (vector< vector <double> > , double , double , FILE * ,int );
+vector< vector <double> >	drift (vector< vector <double> > , double , FILE * ,int );
+#else
+void						prod(double *,vector< vector <double> > );
+vector< vector <double> >	defocusing (vector< vector <double> > , double , double );
+vector< vector <double> >	focusing (vector< vector <double> > , double , double );
+vector< vector <double> >	drift (vector< vector <double> > , double );
+#endif
 
-void prod(double *,vector< vector <double> > ,double );
-
-double *optics(vector< vector <double> > ,int ,bool);
-
-vector< vector <double> > prodo(vector< vector <double> > , vector< vector <double> > , int );
-
-vector< vector <double> >  defocusing (vector< vector <double> > , double , double , FILE * ,int );
-
-vector< vector <double> >  focusing (vector< vector <double> > , double , double , FILE * ,int );
-
-vector< vector <double> >  drift (vector< vector <double> > , double , FILE * ,int );
-
-void scrivimatr2D (vector< vector <double> > , FILE * );
-
-void scrividati (double , double * , double *, double *, double *, FILE * );
-
-void inizializza3D(double ***,int , int );
-
-void inizializza2D(double **, int );
-
-void scrivi_pos_part(FILE * ,double *,double );
-
-vector< vector <double> >  simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
-
-double * assi_ellissi(double *);
-
-void create_gnuplot_file(string , string , double *, int , double , double , double , string *);
-
-double * optics_T (double * , int , vector< vector <double> > );
-
+int							dsMap(double ,double, int);
+double *					optics(vector< vector <double> > ,int ,bool);
+vector< vector <double> >	prodo(vector< vector <double> > , vector< vector <double> > , int );
+void						scrivimatr2D (vector< vector <double> > , FILE * );
+void						scrividati (double , double * , double *, double *, double *, FILE * );
+void						inizializza3D(double ***,int , int );
+void						inizializza2D(double **, int );
+void						scrivi_pos_part(FILE * ,double *,double );
+vector< vector <double> >	simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
+double *					assi_ellissi(double *, double);
+void						create_gnuplot_file(string , string , double *, int , double , double , double , string *);
+double *					optics_T (double * , int , vector< vector <double> > );
 

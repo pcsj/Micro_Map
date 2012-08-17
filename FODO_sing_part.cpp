@@ -10,7 +10,11 @@ int dsMap(double L, double lunghezzatotale, int n_step)
 }
 
 
+#ifdef DEBUG
 void prod(double * A, vector< vector <double> > N, double S)
+#else
+void prod(double * A, vector< vector <double> > N)
+#endif
 {
 	double *H = new double[4];
 	for (int i=0; i<4; i++) H[i] = 0.0;
@@ -102,8 +106,11 @@ vector< vector <double> > prodo(vector< vector <double> > A, vector< vector <dou
 	return A;
 }
 
-
+#ifdef DEBUG
 vector< vector <double> >  defocusing (vector< vector <double> > M, double d1, double S, FILE * file, int contatore)
+#else
+vector< vector <double> >  defocusing (vector< vector <double> > M, double d1, double S)
+#endif
 {
 	M[0][0]=M[1][1]=cosh(d1*S);
 	M[0][1]=sinh(d1*S)/d1;
@@ -124,8 +131,11 @@ vector< vector <double> >  defocusing (vector< vector <double> > M, double d1, d
 	return M;
 }
 
-
+#ifdef DEBUG
 vector< vector <double> >  focusing (vector< vector <double> > M, double d1, double S, FILE * file, int contatore)
+#else
+vector< vector <double> >  focusing (vector< vector <double> > M, double d1, double S)
+#endif
 {
 	M[0][0]=M[1][1]=cos(d1*S);
 	M[0][1]=sin(d1*S)/d1;
@@ -147,7 +157,11 @@ vector< vector <double> >  focusing (vector< vector <double> > M, double d1, dou
 }
 
 
+#ifdef DEBUG
 vector< vector <double> >  drift (vector< vector <double> > M, double S, FILE * file, int contatore)
+#else
+vector< vector <double> >  drift (vector< vector <double> > M, double S)
+#endif
 {
 	M[0][0]=M[1][1]=M[2][2]=M[3][3]=1.;
 	M[0][1]=M[2][3]=S;
@@ -241,12 +255,12 @@ vector< vector <double> > simil(vector< vector <double> > F,vector< vector <doub
 	return F;
 }
 
-double * assi_ellissi(double *alpha)
+double * assi_ellissi(double *alpha, double emittance)
 {
 	double * minimi_massimi = new double[2];
 	for (int i = 0; i < 2; i++) minimi_massimi[i] = 0.0;
-	minimi_massimi[0] = sqrt((alpha[1])*EPSILON);
-	minimi_massimi[1] = sqrt(((alpha[0])* (alpha[0])+1.)*EPSILON / (alpha[1]));
+	minimi_massimi[0] = sqrt((alpha[1])*emittance);
+	minimi_massimi[1] = sqrt(((alpha[0])* (alpha[0])+1.)*emittance / (alpha[1]));
 	return minimi_massimi;
 }
 
@@ -298,17 +312,58 @@ double *optics_T (double * A, int i, vector< vector <double> > O)
 
 
 
-int main() 
+int main(int argc, char *argv[]) 
 { 
 #ifdef __linux
 	feenableexcept(2);
 	feenableexcept(3);
 #endif
 
-	FILE * funzioni_ottiche=fopen("Funzioni_Ottiche.txt","w");
+	bool fallita_lettura_parametri = true;
+	bool fallita_lettura_inputdistr = true;
+	bool do_transport = false;
+	bool do_optics = false;
+	ifstream parametri;
+	ifstream inputdistr;
+	int nstep = 1;
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (string(argv[i]) == "-p")
+		{
+			parametri.open(argv[i+1]);
+			fallita_lettura_parametri=parametri.fail();
+			i++;
+		}
+		else if (string(argv[i]) == "-i")
+		{
+			inputdistr.open(argv[i+1]);
+			fallita_lettura_inputdistr=inputdistr.fail();
+			i++;
+		}
+		else if (string(argv[i]) == "-transport")
+		{
+			do_transport=true;
+		}
+		else if (string(argv[i]) == "-optics")
+		{
+			do_optics=true;
+		}
+		else if (string(argv[i]) == "-nstep")
+		{
+			nstep = atoi(argv[i+1]);
+			i++;
+		}
+		else
+		{
+			printf("Impossibile riconoscere il parametro %s\n",std::string(argv[i]));
+		}
+	}
+
 	FILE * matrici_iniziali=fopen("Matrici_Iniziali.txt","w");
 	FILE * posizionePart=fopen("Posizione_Particelle.txt","w");
 
+	FILE * funzioni_ottiche=fopen("Funzioni_Ottiche.txt","w");
 #ifdef TEST_OPTICAL_FUNCTIONS
 	FILE * funzioni_ottiche_t=fopen("Funzioni_Ottiche_T.txt","w");
 #endif
@@ -319,15 +374,32 @@ int main()
 
 	string utile_per_contare;
 	int conta_righe_parametri = 0;
-	bool fallita_lettura=true;
-	ifstream parametri;
-	parametri.open("parametri.txt");
-	fallita_lettura=parametri.fail();
-	if (fallita_lettura)
+	if (fallita_lettura_parametri || fallita_lettura_inputdistr)
 	{
-		printf("Impossibile aprire parametri.txt\n");
+		printf("Impossibile aprire (o non definito) il file contenente i parametri\no il file contenente la distribuzione/particella iniziale\n");
 		exit(204);
 	}
+
+	double * dati_iniziali = new double[6];	// emittanza, energia, x, y, px, py
+	for (int i = 0; i < 6; i++)
+	{
+		if(inputdistr.eof())
+		{
+			printf("Mancano dei dati iniziali!\n");
+			exit(123);
+		}
+		inputdistr >> dati_iniziali[i];
+	}
+	inputdistr.clear();
+	inputdistr.seekg(0,std::ios::beg);
+
+	double emittanza = dati_iniziali[0];
+	double energia = dati_iniziali[1];
+	double *vett_i=new double[4];
+	vett_i[0]=dati_iniziali[2];
+	vett_i[1]=dati_iniziali[4];
+	vett_i[2]=dati_iniziali[3];
+	vett_i[3]=dati_iniziali[5];
 
 	do
 	{
@@ -370,7 +442,14 @@ int main()
 	vector <vector <vector <double> > > DxI(contatore,vector <vector <double> > (4, vector <double> (4,0.0)));
 	vector <vector <vector <double> > > O(contatore,vector <vector <double> > (4, vector <double> (4,0.0)));
 
-	double gamma_beta=sqrt(2.0*ENERGIA/MP_MEV);
+	double *alpha = new double[2];
+	double *beta = new double[2];
+	double *aminmax = new double[2];
+	double *bminmax = new double[2];
+	bool alpha_calcolato_con_successo=true;
+	bool beta_calcolato_con_successo=true;
+
+	double gamma_beta=sqrt(2.0*energia/MP_MEV);
 	double gamma_v=gamma_beta*SPEED_OF_LIGHT;
 	double *f1 =new double [contatore];
 	double *d1 =new double [contatore];
@@ -392,15 +471,22 @@ int main()
 
 	for (int i=0;i<contatore;i++)
 	{
+#ifdef DEBUG
 		if (elemento[i]=='F')
 			Fx[i]=focusing(Fx[i],f1[i],lunghezza[i],matrici_iniziali,i);
 		else if (elemento[i]=='D')
 			Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i],matrici_iniziali,i);
 		else if (elemento[i]=='O')
 			O[i]=drift(O[i],lunghezza[i],matrici_iniziali,i);
-#ifdef DEBUG
 		else
 			fprintf(outputDEBUG,"Elemento[%d]= %c non riconosciuto\n", i,elemento[i]);
+#else
+		if (elemento[i]=='F')
+			Fx[i]=focusing(Fx[i],f1[i],lunghezza[i]);
+		else if (elemento[i]=='D')
+			Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i]);
+		else if (elemento[i]=='O')
+			O[i]=drift(O[i],lunghezza[i]);
 #endif
 	}
 
@@ -437,113 +523,101 @@ int main()
 /************************************************************************/
 
 
-//	FODO composizione matrici
+	if (do_optics)
+	{
+		vector <vector <double> > compos(4,vector<double>(4,0));
 
-	vector <vector <double> > compos(4,vector<double>(4,0));
+		if (elemento[0]=='O')
+		{
+			for (int k=0; k<4; k++)
+				for (int j=0; j<4; j++)
+					compos[k][j]=O[0][k][j];
+		}
+		else if (elemento[0]=='F')
+		{
+			for (int k=0; k<4; k++)
+				for (int j=0; j<4; j++)
+					compos[k][j]=Fx[0][k][j];
+		}
+		else if (elemento[0]=='D')
+		{
+			for (int k=0; k<4; k++)
+				for (int j=0; j<4; j++)
+					compos[k][j]=Dx[0][k][j];
+		}
 
-	if (elemento[0]=='O')
-	{
-		for (int k=0; k<4; k++)
-			for (int j=0; j<4; j++)
-				compos[k][j]=O[0][k][j];
-	}
-	else if (elemento[0]=='F')
-	{
-		for (int k=0; k<4; k++)
-			for (int j=0; j<4; j++)
-				compos[k][j]=Fx[0][k][j];
-	}
-	else if (elemento[0]=='D')
-	{
-		for (int k=0; k<4; k++)
-			for (int j=0; j<4; j++)
-				compos[k][j]=Dx[0][k][j];
-	}
-
-	for (int i=1;i<contatore;i++)
-	{
-		if (elemento[i]=='O')
-			compos=prodo(O[i],compos,4);
-		else if (elemento[i]=='F')
-			compos=prodo(Fx[i],compos,4);
-		else if (elemento[i]=='D')
-			compos=prodo(Dx[i],compos,4);
-	}
+		for (int i=1;i<contatore;i++)
+		{
+			if (elemento[i]=='O')
+				compos=prodo(O[i],compos,4);
+			else if (elemento[i]=='F')
+				compos=prodo(Fx[i],compos,4);
+			else if (elemento[i]=='D')
+				compos=prodo(Dx[i],compos,4);
+		}
 	
-	for (int i=0;i<4;i++)
-		for(int a=0;a<4;a++)
-			F[i][a]=compos[i][a];
+		for (int i=0;i<4;i++)
+			for(int a=0;a<4;a++)
+				F[i][a]=compos[i][a];
 
-	/************************************************************************/
 
-	// Calcolo Funzioni OTTICHE
+//		Calcolo Funzioni OTTICHE
 
-	double *vett_i=new double[4];
-
-	double *alpha = new double[2];
-	double *beta = new double[2];
-	double *aminmax = new double[2];
-	double *bminmax = new double[2];
-	for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
-	bool alpha_calcolato_con_successo=true;
-	bool beta_calcolato_con_successo=true;
-
+		for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 #ifdef TEST_OPTICAL_FUNCTIONS
-	double *alphaturk = new double[2];
-	double *betaturk = new double[2];
-	double *aminmaxturk = new double[2];
-	double *bminmaxturk = new double[2];
-	for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
+		double *alphaturk = new double[2];
+		double *betaturk = new double[2];
+		double *aminmaxturk = new double[2];
+		double *bminmaxturk = new double[2];
+		for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
 #endif
 
-	alpha=optics(F,FOC,&alpha_calcolato_con_successo);
-	beta=optics(F,DEFOC,&beta_calcolato_con_successo);
-	aminmax = assi_ellissi(alpha);
-	bminmax = assi_ellissi(beta);
+		alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+		beta=optics(F,DEFOC,&beta_calcolato_con_successo);
+		aminmax = assi_ellissi(alpha, emittanza);
+		bminmax = assi_ellissi(beta, emittanza);
 
-	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
-	{
-		fprintf(funzioni_ottiche,"\n#%7c",'S');
-		fprintf(funzioni_ottiche,"%10.8s","Alpha x");
-		fprintf(funzioni_ottiche,"%10.7s","Beta x");
-		fprintf(funzioni_ottiche,"%12.8s","Alpha y");
-		fprintf(funzioni_ottiche,"%10.7s","Beta y");
-		fprintf(funzioni_ottiche,"%10s","x");
-		fprintf(funzioni_ottiche,"%11s","p_x");
-		fprintf(funzioni_ottiche,"%11s","y");
-		fprintf(funzioni_ottiche,"%11s","p_y");
-	}
+		if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
+		{
+			fprintf(funzioni_ottiche,"\n#%7c",'S');
+			fprintf(funzioni_ottiche,"%10.8s","Alpha x");
+			fprintf(funzioni_ottiche,"%10.7s","Beta x");
+			fprintf(funzioni_ottiche,"%12.8s","Alpha y");
+			fprintf(funzioni_ottiche,"%10.7s","Beta y");
+			fprintf(funzioni_ottiche,"%10s","x");
+			fprintf(funzioni_ottiche,"%11s","p_x");
+			fprintf(funzioni_ottiche,"%11s","y");
+			fprintf(funzioni_ottiche,"%11s","p_y");
+		}
 
-	scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+		scrividati(0.0,alpha,beta,aminmax,bminmax,funzioni_ottiche);
 
 
 #ifdef TEST_OPTICAL_FUNCTIONS
-	// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
-	// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
-	for (int i=0;i<2;i++)
-	{
-		alphaturk[i]=alpha[i];
-		betaturk[i]=beta[i];
-		aminmaxturk[i]=aminmax[i];
-		bminmaxturk[i]=bminmax[i];
-	}
-	scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+		// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
+		// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
+		for (int i=0;i<2;i++)
+		{
+			alphaturk[i]=alpha[i];
+			betaturk[i]=beta[i];
+			aminmaxturk[i]=aminmax[i];
+			bminmaxturk[i]=bminmax[i];
+		}
+		scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
 #endif
+	}
 
-	vett_i[0]=pos_x;
-	vett_i[1]=imp_x;
-	vett_i[2]=pos_y;
-	vett_i[3]=imp_y;
-
-	fprintf(posizionePart," %+10.5f",0.0);
-	fprintf(posizionePart," %+10.5f",vett_i[0]);
-	fprintf(posizionePart," %+10.5f",vett_i[1]);
-	fprintf(posizionePart," %+10.5f",vett_i[2]);
-	fprintf(posizionePart," %+10.5f\n",vett_i[3]);
-	
+	if(do_transport)
+	{
+		fprintf(posizionePart," %+10.5f",0.0);
+		fprintf(posizionePart," %+10.5f",vett_i[0]);
+		fprintf(posizionePart," %+10.5f",vett_i[1]);
+		fprintf(posizionePart," %+10.5f",vett_i[2]);
+		fprintf(posizionePart," %+10.5f\n",vett_i[3]);
+	}
 #ifdef DEBUG
-	fprintf(outputDEBUG, "\nFODO:");
-	scrivimatr2D(F,outputDEBUG);
+		fprintf(outputDEBUG, "\nFODO:");
+		scrivimatr2D(F,outputDEBUG);
 #endif
 
 /************************************************************************/
@@ -557,7 +631,7 @@ int main()
 #ifdef DEBUG
 	for (int i=0; i < contatore; i++)
 	{
-		fprintf(outputDEBUG,"\n#step in elemento %d = %d",i, dsMap(lunghezza[i],lunghezzatotale,N_STEP));
+		fprintf(outputDEBUG,"\n#step in elemento %d = %d",i, dsMap(lunghezza[i],lunghezzatotale,nstep));
 	}
 	fprintf(outputDEBUG,"\n");
 #endif
@@ -566,36 +640,53 @@ int main()
 	//Calcolo MICROMAPPE per il Drift
 	for (int i=0; i < contatore; i++)
 	{
-		S=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,N_STEP);
+		S=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
+#ifdef DEBUG
 		if (elemento[i] == 'O')
 		{
 			O[i]=drift(O[i],S,matrici_iniziali,i);
 			OI[i]=drift(OI[i],-S,matrici_iniziali,i);
 		}
-		// per il Focusing
 		else if (elemento[i] == 'F')
 		{
 			Fx[i]=focusing(Fx[i],f1[i],S,matrici_iniziali,i);
 			FxI[i]=focusing(FxI[i],f1[i],-S,matrici_iniziali,i);
 		}
-		//per il Defocusing
 		else if (elemento[i] == 'D')
 		{
 			Dx[i]=defocusing(Dx[i],d1[i],S,matrici_iniziali,i);
 			DxI[i]=defocusing(DxI[i],d1[i],-S,matrici_iniziali,i);
 		}
+#else
+		if (elemento[i] == 'O')
+		{
+			O[i]=drift(O[i],S);
+			OI[i]=drift(OI[i],-S);
+		}
+		else if (elemento[i] == 'F')
+		{
+			Fx[i]=focusing(Fx[i],f1[i],S);
+			FxI[i]=focusing(FxI[i],f1[i],-S);
+		}
+		else if (elemento[i] == 'D')
+		{
+			Dx[i]=defocusing(Dx[i],d1[i],S);
+			DxI[i]=defocusing(DxI[i],d1[i],-S);
+		}
+#endif
 	}
 
 /***********************************************************************/
 
 
 	double dl=0.;
-	double lunghezza_accumulata=0.01;
+//	double lunghezza_accumulata=0.01;
+	double lunghezza_accumulata=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,nstep);
 
-	S=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,N_STEP);
+	S=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,nstep);
 	for (int i=0;i<contatore;i++)
 	{
-		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,N_STEP);
+		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
 		if (elemento[i]=='O')
 		{
 			fprintf(matrici_iniziali,"\n#Drift #%d, dl = %f",i,dl);
@@ -604,21 +695,31 @@ int main()
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				prod(vett_i,O[i],S);
-				scrivi_pos_part(posizionePart,vett_i,S);
-				F=simil(F,OI[i],O[i]);
-				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
-				beta=optics(F,DEFOC,&beta_calcolato_con_successo);
-				aminmax = assi_ellissi(alpha);
-				bminmax = assi_ellissi(beta);
-				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-#ifdef TEST_OPTICAL_FUNCTIONS
-				alphaturk=optics_T(alphaturk,FOC,O[i]);
-				betaturk=optics_T(betaturk,DEFOC,O[i]);
-				aminmaxturk = assi_ellissi(alphaturk);
-				bminmaxturk = assi_ellissi(betaturk);
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+				if (do_transport)
+				{
+#ifdef DEBUG
+					prod(vett_i,O[i],S);
+#else
+					prod(vett_i,O[i]);
 #endif
+					scrivi_pos_part(posizionePart,vett_i,S);
+				}
+				if (do_optics)
+				{
+					F=simil(F,OI[i],O[i]);
+					alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
+					aminmax = assi_ellissi(alpha, emittanza);
+					bminmax = assi_ellissi(beta, emittanza);
+					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
+					alphaturk=optics_T(alphaturk,FOC,O[i]);
+					betaturk=optics_T(betaturk,DEFOC,O[i]);
+					aminmaxturk = assi_ellissi(alphaturk, emittanza);
+					bminmaxturk = assi_ellissi(betaturk, emittanza);
+					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
+				}
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -631,21 +732,31 @@ int main()
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				prod(vett_i,Fx[i],S);
-				scrivi_pos_part(posizionePart,vett_i,S);
-				F=simil(F,FxI[i],Fx[i]);
-				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
-				beta=optics(F,DEFOC,&beta_calcolato_con_successo);		
-				aminmax = assi_ellissi(alpha);
-				bminmax = assi_ellissi(beta);
-				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-#ifdef TEST_OPTICAL_FUNCTIONS
-				alphaturk=optics_T(alphaturk,FOC,Fx[i]);
-				betaturk=optics_T(betaturk,DEFOC,Fx[i]);
-				aminmaxturk = assi_ellissi(alphaturk);
-				bminmaxturk = assi_ellissi(betaturk);	
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+				if (do_transport)
+				{
+#ifdef DEBUG
+					prod(vett_i,Fx[i],S);
+#else
+					prod(vett_i,Fx[i]);
 #endif
+					scrivi_pos_part(posizionePart,vett_i,S);
+				}
+				if (do_optics)
+				{
+					F=simil(F,FxI[i],Fx[i]);
+					alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+					beta=optics(F,DEFOC,&beta_calcolato_con_successo);		
+					aminmax = assi_ellissi(alpha, emittanza);
+					bminmax = assi_ellissi(beta, emittanza);
+					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
+					alphaturk=optics_T(alphaturk,FOC,Fx[i]);
+					betaturk=optics_T(betaturk,DEFOC,Fx[i]);
+					aminmaxturk = assi_ellissi(alphaturk, emittanza);
+					bminmaxturk = assi_ellissi(betaturk, emittanza);
+					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
+				}
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -658,21 +769,31 @@ int main()
 			{
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
-				prod(vett_i,Dx[i],S);
-				scrivi_pos_part(posizionePart,vett_i,S);
-				F=simil(F,DxI[i],Dx[i]);
-				alpha=optics(F,FOC,&alpha_calcolato_con_successo);
-				beta=optics(F,DEFOC,&beta_calcolato_con_successo);
-				aminmax = assi_ellissi(alpha);
-				bminmax = assi_ellissi(beta);
-				scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
-#ifdef TEST_OPTICAL_FUNCTIONS
-				alphaturk=optics_T(alphaturk,FOC,Dx[i]);
-				betaturk=optics_T(betaturk,DEFOC,Dx[i]);
-				aminmaxturk = assi_ellissi(alphaturk);
-				bminmaxturk = assi_ellissi(betaturk);		
-				scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+				if (do_transport)
+				{
+#ifdef DEBUG
+					prod(vett_i,Dx[i],S);
+#else
+					prod(vett_i,Dx[i]);
 #endif
+					scrivi_pos_part(posizionePart,vett_i,S);
+				}
+				if (do_optics)
+				{
+					F=simil(F,DxI[i],Dx[i]);
+					alpha=optics(F,FOC,&alpha_calcolato_con_successo);
+					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
+					aminmax = assi_ellissi(alpha, emittanza);
+					bminmax = assi_ellissi(beta, emittanza);
+					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+#ifdef TEST_OPTICAL_FUNCTIONS
+					alphaturk=optics_T(alphaturk,FOC,Dx[i]);
+					betaturk=optics_T(betaturk,DEFOC,Dx[i]);
+					aminmaxturk = assi_ellissi(alphaturk, emittanza);
+					bminmaxturk = assi_ellissi(betaturk, emittanza);
+					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+#endif
+				}
 				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -683,6 +804,7 @@ int main()
 	fclose(matrici_iniziali);
 	fclose(posizionePart);
 	parametri.close();
+	inputdistr.close();
 
 #ifdef TEST_OPTICAL_FUNCTIONS
 	fclose(funzioni_ottiche_t);
@@ -712,10 +834,13 @@ int main()
 	etichette_ottiche[5] = "Beta_y";
 #endif
 
-	create_gnuplot_file( "Posizione.plt", "Posizione Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_posizione);
-	system ("gnuplot Posizione.plt");
-
-	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
+	if (do_transport)
+	{
+		create_gnuplot_file( "Posizione.plt", "Posizione Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_posizione);
+		system ("gnuplot Posizione.plt");
+	}
+	
+	if (do_optics&&alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
 		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche);
 		system ("gnuplot Funzioni_Ottiche.plt");
