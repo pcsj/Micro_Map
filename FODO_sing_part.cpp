@@ -264,34 +264,34 @@ double * assi_ellissi(double *alpha, double emittance)
 	return minimi_massimi;
 }
 
-void create_gnuplot_file(string gnuplot_filename, string run_name, double *lunghezza, int contatore, double estremo, double zmin, double zmax, string *keys)
+void create_gnuplot_file(string gnuplot_filename, string data_filename, double *lunghezza, int contatore, double estremo, double zmin, double zmax, string *keys)
 {
 	ofstream gnuplot_file;
 	double lunghezza_percorsa=0.;
 	gnuplot_file.open(gnuplot_filename.c_str());
 	gnuplot_file << "#!/gnuplot" << endl;
-	gnuplot_file << "FILE=\"" << run_name << ".txt\"" << endl;
+	gnuplot_file << "FILE=\"" << data_filename << "\"" << endl;
 #if defined (CREATE_PNG)
 	gnuplot_file << "set terminal png enhanced 15" << endl;
-	gnuplot_file << "set output \"graph_" << run_name << ".png\"" << endl;
+	gnuplot_file << "set output \"graph_" << keys[0] << ".png\"" << endl;
 #elif defined (CREATE_EPS)
 	gnuplot_file << "set terminal postscript eps enhanced colour solid rounded \"Helvetica\" 25" << endl;
 	gnuplot_file << "set output \"graph_" << run_name << ".eps\"" << endl;
 #endif
 	gnuplot_file << "set xrange[" << zmin << ":" << zmax << "]" << endl;
 	gnuplot_file << "#set yrange[" << -estremo << ":" << estremo << "]" << endl;
-	gnuplot_file << "set title  \""<< run_name <<" \"" << endl;
-	gnuplot_file << "set xlabel \" " << keys[0] << "\"" << endl;
-	gnuplot_file << "set ylabel \" " << keys[1] << "\"" << endl;
+	gnuplot_file << "set title  \""<< keys[1] <<" \"" << endl;
+	gnuplot_file << "set xlabel \" " << keys[2] << "\"" << endl;
+	gnuplot_file << "set ylabel \" " << keys[3] << "\"" << endl;
 	for (int i = 0; i < contatore; i++)
 	{
 		lunghezza_percorsa+=lunghezza[i];
 		gnuplot_file << "set arrow from " << lunghezza_percorsa<< "," << -5 << " to "<< lunghezza_percorsa << ","<< 5 << " nohead lc rgb \"black\" lw 1" << endl;
 	}
-	gnuplot_file << "plot FILE u 1:2 w lines lt 1 lc rgb \"red\" lw 1 t \" " << keys[2] << "\",\\" << endl;
-	gnuplot_file << "FILE u 1:4 w lines lt 1 lc rgb \"blue\" lw 1 t \" " << keys[3] << "\",\\" << endl;
-	gnuplot_file << "FILE u 1:3 w lines lt 1 lc rgb \"orange\" lw 1 t \" " << keys[4] << "\",\\" << endl;
-	gnuplot_file << "FILE u 1:5 w lines lt 1 lc rgb \"dark-green\" lw 1 t \" " << keys[5] << "\"" << endl;
+	gnuplot_file << "plot FILE u 1:2 w lines lt 1 lc rgb \"red\" lw 1 t \" " << keys[4] << "\",\\" << endl;
+	gnuplot_file << "FILE u 1:4 w lines lt 1 lc rgb \"blue\" lw 1 t \" " << keys[5] << "\",\\" << endl;
+	gnuplot_file << "FILE u 1:3 w lines lt 1 lc rgb \"orange\" lw 1 t \" " << keys[6] << "\",\\" << endl;
+	gnuplot_file << "FILE u 1:5 w lines lt 1 lc rgb \"dark-green\" lw 1 t \" " << keys[7] << "\"" << endl;
 
 	gnuplot_file.close();
 }
@@ -810,42 +810,69 @@ int main(int argc, char *argv[])
 	fclose(funzioni_ottiche_t);
 #endif
 
-	string *etichette_posizione = new string[6];
-	string *etichette_ottiche = new string[6];
-	etichette_posizione[0] = "z (m)";
-	etichette_posizione[1] = "x/y (m), p_x/p_y";
-	etichette_posizione[2] = "x";
-	etichette_posizione[3] = "y";
-	etichette_posizione[4] = "p_x";
-	etichette_posizione[5] = "p_y";
+	string *etichette_posizione = new string[8];
+	string *etichette_ottiche = new string[8];
+#ifdef TEST_OPTICAL_FUNCTIONS
+	string *etichette_ottiche_T = new string[8];
+#endif
 
-	etichette_ottiche[0] = "z (m)";
+	etichette_posizione[0] = "Posizione_Particelle";
+	etichette_posizione[1] = "Posizione Particelle";
+	etichette_posizione[2] = "z (m)";
+	etichette_posizione[3] = "x/y (m), p_x/p_y";
+	etichette_posizione[4] = "x";
+	etichette_posizione[5] = "y";
+	etichette_posizione[6] = "p_x";
+	etichette_posizione[7] = "p_y";
+
+	etichette_ottiche[0] = "Funzioni_Ottiche";
+	etichette_ottiche[1] = "Funzioni Ottiche";
+	etichette_ottiche[2] = "z (m)";
 #if defined (CREATE_EPS)
-	etichette_ottiche[1] = "{/Symbol a}, {/Symbol b}";
-	etichette_ottiche[2] = "{/Symbol a}_x";
-	etichette_ottiche[3] = "{/Symbol a}_y";
-	etichette_ottiche[4] = "{/Symbol b}_x";
-	etichette_ottiche[5] = "{/Symbol b}_y";
+	etichette_ottiche[3] = "{/Symbol a}, {/Symbol b}";
+	etichette_ottiche[4] = "{/Symbol a}_x";
+	etichette_ottiche[5] = "{/Symbol a}_y";
+	etichette_ottiche[6] = "{/Symbol b}_x";
+	etichette_ottiche[7] = "{/Symbol b}_y";
 #else
-	etichette_ottiche[1] = "Alpha, Beta";
-	etichette_ottiche[2] = "Alpha_x";
-	etichette_ottiche[3] = "Alpha_y";
-	etichette_ottiche[4] = "Beta_x";
-	etichette_ottiche[5] = "Beta_y";
+	etichette_ottiche[3] = "Alpha, Beta";
+	etichette_ottiche[4] = "Alpha_x";
+	etichette_ottiche[5] = "Alpha_y";
+	etichette_ottiche[6] = "Beta_x";
+	etichette_ottiche[7] = "Beta_y";
+#endif
+
+#ifdef TEST_OPTICAL_FUNCTIONS
+	etichette_ottiche_T[0] = "Funzioni_Ottiche_T";
+	etichette_ottiche_T[1] = "Funzioni ottiche test";
+	etichette_ottiche_T[2] = "z (m)";
+#if defined (CREATE_EPS)
+	etichette_ottiche_T[3] = "{/Symbol a}, {/Symbol b}";
+	etichette_ottiche_T[4] = "{/Symbol a}_x";
+	etichette_ottiche_T[5] = "{/Symbol a}_y";
+	etichette_ottiche_T[6] = "{/Symbol b}_x";
+	etichette_ottiche_T[7] = "{/Symbol b}_y";
+#else
+	etichette_ottiche_T[3] = "Alpha, Beta";
+	etichette_ottiche_T[4] = "Alpha_x";
+	etichette_ottiche_T[5] = "Alpha_y";
+	etichette_ottiche_T[6] = "Beta_x";
+	etichette_ottiche_T[7] = "Beta_y";
+#endif
 #endif
 
 	if (do_transport)
 	{
-		create_gnuplot_file( "Posizione.plt", "Posizione Particelle", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_posizione);
+		create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_posizione);
 		system ("gnuplot Posizione.plt");
 	}
 	
 	if (do_optics&&alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
-		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni Ottiche", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche);
+		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche);
 		system ("gnuplot Funzioni_Ottiche.plt");
 #ifdef TEST_OPTICAL_FUNCTIONS
-		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni Ottiche T", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche);
+		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche_T);
 		system ("gnuplot Funzioni_Ottiche_T.plt");
 #endif
 	}

@@ -11,7 +11,7 @@ echo O       0.0     0.3 >  parametri.txt
 echo D       $i      0.2 >> parametri.txt
 echo O       0.0     0.3 >> parametri.txt
 echo F       10.0    0.2 >> parametri.txt
-./FODO_sing_part -p parametri.txt -i inputdata.txt -optics -transport
+./FODO_sing_part -p parametri.txt -i inputdata.txt -optics -transport -nstep 100
 mv graph_Funzioni_Ottiche.png graph_Funzioni_Ottiche_${i}.png
 mv graph_Posizione_Particelle.png graph_Posizione_Particelle_${i}.png
 i="$(echo "${i}+${INCREASE_STEP}" | bc)"
