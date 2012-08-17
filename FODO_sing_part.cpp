@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			printf("Impossibile riconoscere il parametro %s\n",std::string(argv[i]));
+			printf("Impossibile riconoscere il parametro %s\n",argv[i]);
 		}
 	}
 
