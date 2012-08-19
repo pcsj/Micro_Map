@@ -413,7 +413,8 @@ int main(int argc, char *argv[])
 	parametri.seekg(0,std::ios::beg);
 
 	// qui di leggono tutti i dati
-	char *elemento=new char[conta_righe_parametri];
+//	char *elemento=new char[conta_righe_parametri];
+	string *elemento=new string[conta_righe_parametri];
 	double * lunghezza= new double[conta_righe_parametri];
 	double * gradiente= new double[conta_righe_parametri];
 	int contatore=0;
@@ -423,7 +424,8 @@ int main(int argc, char *argv[])
 		parametri >> gradiente[i];
 		parametri >> lunghezza[i];
 #ifdef DEBUG
-		printf("tipo elemento: %c, gradiente: %f, lunghezza: %f\n", elemento[contatore], gradiente[contatore], lunghezza[contatore]);
+		cout << "Tipo elemento: " << elemento[i] << ", gradiente: " << gradiente[i] << ", lunghezza: " << lunghezza[i] << endl;
+//		printf("tipo elemento: %c, gradiente: %f, lunghezza: %f\n", elemento[contatore], gradiente[contatore], lunghezza[contatore]);
 #endif
 		contatore++;
 	}
@@ -455,9 +457,9 @@ int main(int argc, char *argv[])
 	double *d1 =new double [contatore];
 	for (int i=0;i<contatore;i++)
 	{
-		if (elemento[i]=='F')
+		if (elemento[i]=="F")
 			f1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
-		if (elemento[i]=='D')
+		if (elemento[i]=="D")
 			d1[i]=sqrt(gradiente[i]*CHARGE/(MP_KG*gamma_v));
 	}
 
@@ -472,20 +474,20 @@ int main(int argc, char *argv[])
 	for (int i=0;i<contatore;i++)
 	{
 #ifdef DEBUG
-		if (elemento[i]=='F')
+		if (elemento[i]=="F")
 			Fx[i]=focusing(Fx[i],f1[i],lunghezza[i],matrici_iniziali,i);
-		else if (elemento[i]=='D')
+		else if (elemento[i]=="D")
 			Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i],matrici_iniziali,i);
-		else if (elemento[i]=='O')
+		else if (elemento[i]=="O")
 			O[i]=drift(O[i],lunghezza[i],matrici_iniziali,i);
 		else
-			fprintf(outputDEBUG,"Elemento[%d]= %c non riconosciuto\n", i,elemento[i]);
+			fprintf(outputDEBUG,"Elemento[%d] non riconosciuto\n", i);
 #else
-		if (elemento[i]=='F')
+		if (elemento[i]=="F")
 			Fx[i]=focusing(Fx[i],f1[i],lunghezza[i]);
-		else if (elemento[i]=='D')
+		else if (elemento[i]=="D")
 			Dx[i]=defocusing(Dx[i],d1[i],lunghezza[i]);
-		else if (elemento[i]=='O')
+		else if (elemento[i]=="O")
 			O[i]=drift(O[i],lunghezza[i]);
 #endif
 	}
@@ -494,21 +496,21 @@ int main(int argc, char *argv[])
 
 	for (int i=0;i<contatore;i++)
 	{
-		if (elemento[i]=='O')
+		if (elemento[i]=="O")
 		{
 //			if (O[i][0][0] == 0.0) continue;
 			fprintf(matrici_iniziali,"\nMATRICE DRIFT");
 			scrivimatr2D(O[i],matrici_iniziali);
 			fprintf(matrici_iniziali,"\n");
 		}
-		else if (elemento[i]=='F')
+		else if (elemento[i]=="F")
 		{
 //			if (Fx[i][0][0] == 0.0) continue;
 			fprintf(matrici_iniziali,"\nMATRICE FOC.");
 			scrivimatr2D(Fx[i],matrici_iniziali);
 			fprintf(matrici_iniziali,"\n");
 		}
-		else if (elemento[i]=='D')
+		else if (elemento[i]=="D")
 		{
 //			if (Dx[i][0][0] == 0.0) continue;
 			fprintf(matrici_iniziali,"\nMATRICE DEFOC.");
@@ -527,19 +529,19 @@ int main(int argc, char *argv[])
 	{
 		vector <vector <double> > compos(4,vector<double>(4,0));
 
-		if (elemento[0]=='O')
+		if (elemento[0]=="O")
 		{
 			for (int k=0; k<4; k++)
 				for (int j=0; j<4; j++)
 					compos[k][j]=O[0][k][j];
 		}
-		else if (elemento[0]=='F')
+		else if (elemento[0]=="F")
 		{
 			for (int k=0; k<4; k++)
 				for (int j=0; j<4; j++)
 					compos[k][j]=Fx[0][k][j];
 		}
-		else if (elemento[0]=='D')
+		else if (elemento[0]=="D")
 		{
 			for (int k=0; k<4; k++)
 				for (int j=0; j<4; j++)
@@ -548,11 +550,11 @@ int main(int argc, char *argv[])
 
 		for (int i=1;i<contatore;i++)
 		{
-			if (elemento[i]=='O')
+			if (elemento[i]=="O")
 				compos=prodo(O[i],compos,4);
-			else if (elemento[i]=='F')
+			else if (elemento[i]=="F")
 				compos=prodo(Fx[i],compos,4);
-			else if (elemento[i]=='D')
+			else if (elemento[i]=="D")
 				compos=prodo(Dx[i],compos,4);
 		}
 	
@@ -642,33 +644,33 @@ int main(int argc, char *argv[])
 	{
 		S=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
 #ifdef DEBUG
-		if (elemento[i] == 'O')
+		if (elemento[i] == "O")
 		{
 			O[i]=drift(O[i],S,matrici_iniziali,i);
 			OI[i]=drift(OI[i],-S,matrici_iniziali,i);
 		}
-		else if (elemento[i] == 'F')
+		else if (elemento[i] == "F")
 		{
 			Fx[i]=focusing(Fx[i],f1[i],S,matrici_iniziali,i);
 			FxI[i]=focusing(FxI[i],f1[i],-S,matrici_iniziali,i);
 		}
-		else if (elemento[i] == 'D')
+		else if (elemento[i] == "D")
 		{
 			Dx[i]=defocusing(Dx[i],d1[i],S,matrici_iniziali,i);
 			DxI[i]=defocusing(DxI[i],d1[i],-S,matrici_iniziali,i);
 		}
 #else
-		if (elemento[i] == 'O')
+		if (elemento[i] == "O")
 		{
 			O[i]=drift(O[i],S);
 			OI[i]=drift(OI[i],-S);
 		}
-		else if (elemento[i] == 'F')
+		else if (elemento[i] == "F")
 		{
 			Fx[i]=focusing(Fx[i],f1[i],S);
 			FxI[i]=focusing(FxI[i],f1[i],-S);
 		}
-		else if (elemento[i] == 'D')
+		else if (elemento[i] == "D")
 		{
 			Dx[i]=defocusing(Dx[i],d1[i],S);
 			DxI[i]=defocusing(DxI[i],d1[i],-S);
@@ -687,7 +689,7 @@ int main(int argc, char *argv[])
 	for (int i=0;i<contatore;i++)
 	{
 		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
-		if (elemento[i]=='O')
+		if (elemento[i]=="O")
 		{
 			fprintf(matrici_iniziali,"\n#Drift #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Drift #%d, dl = %f",i,dl);
@@ -724,7 +726,7 @@ int main(int argc, char *argv[])
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
-		else if (elemento[i]=='F')
+		else if (elemento[i]=="F")
 		{
 			fprintf(matrici_iniziali,"\n#Foc. #%d, dl = %f",i,dl);			
 			fprintf(funzioni_ottiche,"\n#Foc. #%d, dl = %f",i,dl);
@@ -761,7 +763,7 @@ int main(int argc, char *argv[])
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
-		else if (elemento[i]=='D')
+		else if (elemento[i]=="D")
 		{
 			fprintf(matrici_iniziali,"\n#Defoc. #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Defoc. #%d, dl = %f",i,dl);
