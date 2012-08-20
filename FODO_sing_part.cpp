@@ -279,14 +279,14 @@ void create_gnuplot_file(string gnuplot_filename, string data_filename, double *
 	gnuplot_file << "set output \"graph_" << run_name << ".eps\"" << endl;
 #endif
 	gnuplot_file << "set xrange[" << zmin << ":" << zmax << "]" << endl;
-	gnuplot_file << "#set yrange[" << -estremo << ":" << estremo << "]" << endl;
+	gnuplot_file << "set yrange[" << -estremo << ":" << estremo << "]" << endl;
 	gnuplot_file << "set title  \""<< keys[1] <<" \"" << endl;
 	gnuplot_file << "set xlabel \" " << keys[2] << "\"" << endl;
 	gnuplot_file << "set ylabel \" " << keys[3] << "\"" << endl;
 	for (int i = 0; i < contatore; i++)
 	{
 		lunghezza_percorsa+=lunghezza[i];
-		gnuplot_file << "set arrow from " << lunghezza_percorsa<< "," << -5 << " to "<< lunghezza_percorsa << ","<< 5 << " nohead lc rgb \"black\" lw 1" << endl;
+		gnuplot_file << "set arrow from " << lunghezza_percorsa<< "," << -estremo << " to "<< lunghezza_percorsa << ","<< estremo << " nohead lc rgb \"black\" lw 1" << endl;
 	}
 	gnuplot_file << "plot FILE u 1:2 w lines lt 1 lc rgb \"red\" lw 1 t \" " << keys[4] << "\",\\" << endl;
 	gnuplot_file << "FILE u 1:4 w lines lt 1 lc rgb \"blue\" lw 1 t \" " << keys[5] << "\",\\" << endl;
@@ -310,6 +310,26 @@ double *optics_T (double * A, int i, vector< vector <double> > O)
 }
 #endif
 
+void massimo_opt(double * optics_x , double * optics_y,double * massimo_temp)
+{
+	double max= *massimo_temp;
+	max>fabs(optics_x[0])?max:max=fabs(optics_x[0]);
+	max>fabs(optics_x[1])?max:max=fabs(optics_x[1]);
+	max>fabs(optics_y[0])?max:max=fabs(optics_y[0]);
+	max>fabs(optics_y[1])?max:max=fabs(optics_y[1]);
+	* massimo_temp=max;
+}
+
+void massimo_pos(double * vett_i, double * massimo_temp)
+{
+	double max= *massimo_temp;
+	max>fabs(vett_i[0])?max:max=fabs(vett_i[0]);
+	max>fabs(vett_i[1])?max:max=fabs(vett_i[1]);
+	max>fabs(vett_i[2])?max:max=fabs(vett_i[2]);
+	max>fabs(vett_i[3])?max:max=fabs(vett_i[3]);
+	* massimo_temp=max;
+}
+
 
 
 int main(int argc, char *argv[]) 
@@ -326,6 +346,15 @@ int main(int argc, char *argv[])
 	ifstream parametri;
 	ifstream inputdistr;
 	int nstep = 1;
+
+	double gnuplot_ymax_opt=0.;
+	bool calcola_ymax_opt = true;
+	double gnuplot_ymax_opt_T=0.;
+	bool calcola_ymax_opt_T = true;
+	double gnuplot_ymax_pos=0.;
+	bool calcola_ymax_pos = true;
+	double gnuplot_xmax_opt=0.;
+	double gnuplot_xmax_pos=0.;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -344,6 +373,34 @@ int main(int argc, char *argv[])
 		else if (string(argv[i]) == "-transport")
 		{
 			do_transport=true;
+		}
+		else if (string(argv[i]) == "-xmax_opt")
+		{
+			gnuplot_xmax_opt=atof(argv[i+1]);
+			i++;
+		}
+		else if (string(argv[i]) == "-xmax_pos")
+		{
+			gnuplot_xmax_pos=atof(argv[i+1]);
+			i++;
+		}
+		else if (string(argv[i]) == "-ymax_opt")
+		{
+			gnuplot_ymax_opt=atof(argv[i+1]);
+			calcola_ymax_opt = false;
+			i++;
+		}
+		else if (string(argv[i]) == "-ymax_opt_T")
+		{
+			gnuplot_ymax_opt_T=atof(argv[i+1]);
+			calcola_ymax_opt_T = false;
+			i++;
+		}
+		else if (string(argv[i]) == "-ymax_pos")
+		{
+			gnuplot_ymax_pos=atof(argv[i+1]);
+			calcola_ymax_pos = false;
+			i++;
 		}
 		else if (string(argv[i]) == "-optics")
 		{
@@ -578,6 +635,10 @@ int main(int argc, char *argv[])
 		beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 		aminmax = assi_ellissi(alpha, emittanza);
 		bminmax = assi_ellissi(beta, emittanza);
+		
+		
+		if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
+		if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 
 		if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 		{
@@ -606,6 +667,7 @@ int main(int argc, char *argv[])
 			bminmaxturk[i]=bminmax[i];
 		}
 		scrividati(0.0,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+		if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 #endif
 	}
 
@@ -704,6 +766,7 @@ int main(int argc, char *argv[])
 #else
 					prod(vett_i,O[i]);
 #endif
+					if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 					scrivi_pos_part(posizionePart,vett_i,S);
 				}
 				if (do_optics)
@@ -714,12 +777,14 @@ int main(int argc, char *argv[])
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
 					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
 #ifdef TEST_OPTICAL_FUNCTIONS
 					alphaturk=optics_T(alphaturk,FOC,O[i]);
 					betaturk=optics_T(betaturk,DEFOC,O[i]);
 					aminmaxturk = assi_ellissi(alphaturk, emittanza);
 					bminmaxturk = assi_ellissi(betaturk, emittanza);
 					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 #endif
 				}
 				S+=dl;
@@ -741,6 +806,7 @@ int main(int argc, char *argv[])
 #else
 					prod(vett_i,Fx[i]);
 #endif
+					if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 					scrivi_pos_part(posizionePart,vett_i,S);
 				}
 				if (do_optics)
@@ -751,12 +817,14 @@ int main(int argc, char *argv[])
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
 					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
 #ifdef TEST_OPTICAL_FUNCTIONS
 					alphaturk=optics_T(alphaturk,FOC,Fx[i]);
 					betaturk=optics_T(betaturk,DEFOC,Fx[i]);
 					aminmaxturk = assi_ellissi(alphaturk, emittanza);
 					bminmaxturk = assi_ellissi(betaturk, emittanza);
 					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 #endif
 				}
 				S+=dl;
@@ -778,6 +846,7 @@ int main(int argc, char *argv[])
 #else
 					prod(vett_i,Dx[i]);
 #endif
+					if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 					scrivi_pos_part(posizionePart,vett_i,S);
 				}
 				if (do_optics)
@@ -788,12 +857,14 @@ int main(int argc, char *argv[])
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
 					scrividati(S,alpha,beta,aminmax,bminmax,funzioni_ottiche);
+					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
 #ifdef TEST_OPTICAL_FUNCTIONS
 					alphaturk=optics_T(alphaturk,FOC,Dx[i]);
 					betaturk=optics_T(betaturk,DEFOC,Dx[i]);
 					aminmaxturk = assi_ellissi(alphaturk, emittanza);
 					bminmaxturk = assi_ellissi(betaturk, emittanza);
 					scrividati(S,alphaturk,betaturk,aminmaxturk,bminmaxturk,funzioni_ottiche_t);
+					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 #endif
 				}
 				S+=dl;
@@ -865,30 +936,32 @@ int main(int argc, char *argv[])
 
 	if (do_transport)
 	{
-		create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_posizione);
-		system ("gnuplot Posizione.plt");
+		if (gnuplot_xmax_pos > 0.) create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, gnuplot_xmax_pos, etichette_posizione);
+		else create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, lunghezza_accumulata, etichette_posizione);
+//		system ("gnuplot Posizione.plt");
 	}
 	
 	if (do_optics&&alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 	{
-		create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche);
-		system ("gnuplot Funzioni_Ottiche.plt");
+		if (gnuplot_xmax_opt > 0.) create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, gnuplot_xmax_opt, etichette_ottiche);
+		else create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche);
+//		system ("gnuplot Funzioni_Ottiche.plt");
 #ifdef TEST_OPTICAL_FUNCTIONS
-		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, 1 ,0.0, lunghezza_accumulata, etichette_ottiche_T);
-		system ("gnuplot Funzioni_Ottiche_T.plt");
+		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T);
+//		system ("gnuplot Funzioni_Ottiche_T.plt");
 #endif
 	}
 	else	
 	{
 #if defined (__linux)
-		system ("rm Funzioni_Ottiche.txt"); 
+//		system ("rm Funzioni_Ottiche.txt"); 
 #ifdef TEST_OPTICAL_FUNCTIONS
-		system ("rm Funzioni_Ottiche_T.txt");
+//		system ("rm Funzioni_Ottiche_T.txt");
 #endif
 #elif defined (_WIN32) || defined (_WIN64)
-		system ("del Funzioni_Ottiche.txt"); 
+//		system ("del Funzioni_Ottiche.txt"); 
 #ifdef TEST_OPTICAL_FUNCTIONS
-		system ("del Funzioni_Ottiche_T.txt");
+//		system ("del Funzioni_Ottiche_T.txt");
 #endif
 #endif
 	} 
