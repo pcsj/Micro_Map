@@ -51,13 +51,17 @@ int							dsMap(double ,double, int);
 double *					optics(vector< vector <double> > ,int ,bool);
 vector< vector <double> >	prodo(vector< vector <double> > , vector< vector <double> > , int );
 void						scrivimatr2D (vector< vector <double> > , FILE * );
-void						scrividati (double , double * , double *, double *, double *, FILE * );
+void						scrividati (double , double *, double *, FILE * );
+void						scrividati_ellissi (double ,double *, double *, FILE * );
 void						inizializza3D(double ***,int , int );
 void						inizializza2D(double **, int );
 void						scrivi_pos_part(FILE * ,double *,double );
 vector< vector <double> >	simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 double *					assi_ellissi(double *, double);
-void						create_gnuplot_file(string , string , double *, int , double , double , double , string *);
+void						create_gnuplot_file(string , string , double *, int , double , double , double , string *,bool);
 double *					optics_T (double * , int , vector< vector <double> > );
 void						massimo(double * , double * ,double *);
+void						confronto (double *,double *,double ,double,double,FILE * ,bool );
+
+
 
