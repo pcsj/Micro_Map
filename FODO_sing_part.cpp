@@ -274,15 +274,13 @@ double * assi_ellissi(double *alpha, double emittance)
 }
 
 
-void create_gnuplot_file(string gnuplot_filename, string data_filename, double *lunghezza, int contatore, double estremo, double zmin, double zmax, string *keys,bool confronto_pos)
+void create_gnuplot_file(string gnuplot_filename, string data_filename, double *lunghezza, int contatore, double estremo, double zmin, double zmax, string *keys)
 {
 	ofstream gnuplot_file;
 	double lunghezza_percorsa=0.;
 	gnuplot_file.open(gnuplot_filename.c_str());
 	gnuplot_file << "#!/gnuplot" << endl;
 	gnuplot_file << "FILE=\"" << data_filename << "\"" << endl;
-//	if (confronto_pos)
-//		gnuplot_file << "FILE2=\"Math_rilevati.txt\""<< endl;
 #if defined (CREATE_PNG)
 	gnuplot_file << "set terminal png enhanced 15" << endl;
 	gnuplot_file << "set output \"graph_" << keys[0] << ".png\"" << endl;
@@ -300,8 +298,6 @@ void create_gnuplot_file(string gnuplot_filename, string data_filename, double *
 		lunghezza_percorsa+=lunghezza[i];
 		gnuplot_file << "set arrow from " << lunghezza_percorsa<< "," << -estremo << " to "<< lunghezza_percorsa << ","<< estremo << " nohead lc rgb \"black\" lw 1" << endl;
 	}
-//	if (confronto_pos)
-//		gnuplot_file << "set arrow from FILE2 u 1:1 , "<< -estremo << " to FILE u 1 ,"<< estremo << " nohead lc rgb \"black\" lw 1" << endl;
 	gnuplot_file << "plot FILE u 1:2 w lines lt 1 lc rgb \"red\" lw 1 t \" " << keys[4] << "\",\\" << endl;
 	gnuplot_file << "FILE u 1:4 w lines lt 1 lc rgb \"blue\" lw 1 t \" " << keys[5] << "\",\\" << endl;
 	gnuplot_file << "FILE u 1:3 w lines lt 1 lc rgb \"orange\" lw 1 t \" " << keys[6] << "\",\\" << endl;
@@ -348,6 +344,8 @@ void massimo_pos(double * vett_i, double * massimo_temp)
 void confronto (double * parametri_dati,double * parametri_ottenuti,double z,double gradiente_f,double percentuale,FILE * file,bool *confronto_pos,string elemento)
 {
 	double *diff=new double[2];
+	const char *elemento_char;
+	elemento_char = elemento.c_str();	
 	diff[0]=fabs(parametri_dati[0]-parametri_ottenuti[0]);
 	diff[1]=fabs(parametri_dati[1]-parametri_ottenuti[1]);
 	if ((diff[0]<(percentuale*parametri_dati[0]))&&(diff[1]<(percentuale*parametri_dati[1])))
@@ -1050,20 +1048,20 @@ int main(int argc, char *argv[])
 
 	if (do_transport&&confronto_pos)
 	{
-		if (gnuplot_xmax_pos > 0.) create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, gnuplot_xmax_pos, etichette_posizione,confronto_pos);
-		else create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, lunghezza_accumulata, etichette_posizione,confronto_pos);
+		if (gnuplot_xmax_pos > 0.) create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, gnuplot_xmax_pos, etichette_posizione);
+		else create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, lunghezza_accumulata, etichette_posizione);
 		system ("gnuplot Posizione.plt");
 	}
 
 	if (do_optics&&posso_fare_funzioni_ottiche&&alpha_calcolato_con_successo&&beta_calcolato_con_successo&&confronto_pos)
 	{
-		if (gnuplot_xmax_opt > 0.) create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, gnuplot_xmax_opt, etichette_ottiche,confronto_pos);
-		else create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche,confronto_pos);
-		create_gnuplot_file( "Parametri_Ellissi.plt", "Parametri_Ellissi_Funz_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_ell ,0.0, lunghezza_accumulata, etichette_ellissi,confronto_pos);
+		if (gnuplot_xmax_opt > 0.) create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, gnuplot_xmax_opt, etichette_ottiche);
+		else create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche);
+		create_gnuplot_file( "Parametri_Ellissi.plt", "Parametri_Ellissi_Funz_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_ell ,0.0, lunghezza_accumulata, etichette_ellissi);
 		system ("gnuplot Funzioni_Ottiche.plt");
 		system ("gnuplot Parametri_Ellissi.plt");
 #ifdef TEST_OPTICAL_FUNCTIONS
-		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,confronto_pos);
+		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T);
 //		system ("gnuplot Funzioni_Ottiche_T.plt");
 #endif
 
