@@ -351,7 +351,7 @@ void confronto (double * parametri_dati,double * parametri_ottenuti,double z,dou
 	if ((diff[0]<(percentuale*parametri_dati[0]))&&(diff[1]<(percentuale*parametri_dati[1])))
 	{
 		fprintf(file," \n%+10.5f ",z);
-		fprintf(file,"%s",elemento);
+		fprintf(file,"%s",elemento_char);
 		fprintf(file," %+10.5f ",gradiente_f);
 		*confronto_pos=true;
 	}
