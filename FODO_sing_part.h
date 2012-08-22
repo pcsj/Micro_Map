@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define DEBUG
+//#define DEBUG
 //#define TEST_OPTICAL_FUNCTIONS
 #define CREATE_PNG
 

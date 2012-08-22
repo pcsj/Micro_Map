@@ -15,8 +15,7 @@ $Y_MAX_OPT=5
 $vero=$FALSE
 $P_RIF=1
 $X_RIF=2.5
-$PERC=0.2
-
+$PERC=0.03
 #######
 $grad_d=${GRAD_DEF}
 $grad_f=${GRAD_FOC}
@@ -26,6 +25,14 @@ $a=0
 $i=0
 $j=0
 $k=0
+
+Invoke-BatchFile 'C:\Program Files\Microsoft Visual Studio 11.0\VC\vcvarsall.bat'
+cd ..\FODO_sing_part_1.8\
+cl /EHsc .\FODO_sing_part.cpp
+mv -Force FODO_sing_part.exe ..\Release\
+cd ..\Release
+
+
 if (!(Test-Path "Funzioni_Ottiche")){
 new-Item -type directory ("Funzioni_Ottiche")}
 
@@ -47,11 +54,12 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
             $lung_drift_m=0.5
             while ($k -le $NUMBER_OF_STEPS_DRIFT)
             {
+
+	        echo $k            
+	        echo $j
+	        echo $i
+            echo $a
             
-            echo $grad_d
-	        echo $grad_f
-	        echo $lung_elem
-	        echo $lung_drift_m
 
             if (($lung_drift_m+$lung_drift_i) -gt (${LENGTH_TOTAL}+$lung_elem+$lung_elem))
             {
@@ -75,8 +83,8 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
     
             $riga="O 0.0 $lung_drift_i"
             out-file -filepath .\parametri.txt -inputobject $riga -append -encoding ASCII
-            .\FODO_sing_part_1.7.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -xmax_opt $X_MAX -xmax_pos $X_MAX -compare_X $X_RIF -compare_P $P_RIF -perc $PERC
-    	    
+            .\FODO_sing_part.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -compare_X $X_RIF -compare_P $P_RIF -perc $PERC
+    	    #-xmax_opt $X_MAX -xmax_pos $X_MAX
         
             if (Test-Path ".\graph_Funzioni_Ottiche.png")
             {
@@ -86,9 +94,9 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
 	        {
                Move-Item -Force graph_Posizione_Particelle.png  .\graph_Pos_${a}_${i}_${j}_${k}.png
             }
-            if (Test-Path ".\graph_Posizione_Particelle.png")
+            if (Test-Path ".\graph_Parametri_Ellissi_Funz_Ottiche.png")
 	        {
-               Move-Item -Force graph_Parametri_Ellissi.png  .\graph_Ell_${a}_${i}_${j}_${k}.png
+               Move-Item -Force graph_Parametri_Ellissi_Funz_Ottiche.png  .\graph_Ell_${a}_${i}_${j}_${k}.png
             }
             if (Test-Path ".\Math_rilevati.txt")
 	        {            
@@ -121,10 +129,10 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
          $a=$a+1
     }
 
-$a=0;
-$i=0;
-$j=0;
-$k=0;
+$a=0
+$i=0
+$j=0
+$k=0
      
 while ($a -le $NUMBER_OF_STEPS_FOC)
 {
@@ -146,7 +154,14 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
 	            {
                     Move-Item -Force graph_Ell_${a}_${i}_${j}_${k}.png  .\Posizione_Particelle\FOC_${grad_f}__DEFOC_${grad_d}__L_cel_${lung_elem}__drift_${lung_drift_m}.png
                 }
-            }$k=0
-        }$j=0
-    }$i=0
+                $k=$k+1
+            }
+            $k=0
+            $j=$j+1
+        }
+        $j=0
+        $i=$i+1
+    }
+    $i=0
+    $a=$a+1
 }
