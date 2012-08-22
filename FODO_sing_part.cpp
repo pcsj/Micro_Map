@@ -390,15 +390,19 @@ int main(int argc, char *argv[])
 
 	double gnuplot_ymax_opt=0.;
 	bool calcola_ymax_opt = true;
+
+#ifdef TEST_OPTICAL_FUNCTIONS
 	double gnuplot_ymax_opt_T=0.;
 	bool calcola_ymax_opt_T = true;
+#endif
 	double gnuplot_ymax_pos=0.;
 	bool calcola_ymax_pos = true;
 	double gnuplot_xmax_opt=0.;
 	double gnuplot_xmax_pos=0.;
 	bool calcola_ymax_ell = true;
 	double gnuplot_ymax_ell=0.;
-	double gnuplot_xmax_ell=0.;
+//	double gnuplot_xmax_ell=0.;
+//	bool calcola_xmax_ell = true;
 	double percentuale=0.03;
 
 	double *compare=new double[2];
@@ -440,12 +444,14 @@ int main(int argc, char *argv[])
 			calcola_ymax_opt = false;
 			i++;
 		}
+#ifdef TEST_OPTICAL_FUNCTIONS
 		else if (string(argv[i]) == "-ymax_opt_T")
 		{
 			gnuplot_ymax_opt_T=atof(argv[i+1]);
 			calcola_ymax_opt_T = false;
 			i++;
 		}
+#endif
 		else if (string(argv[i]) == "-ymax_pos")
 		{
 			gnuplot_ymax_pos=atof(argv[i+1]);
@@ -458,11 +464,11 @@ int main(int argc, char *argv[])
 			calcola_ymax_ell = false;
 			i++;
 		}
-		else if (string(argv[i]) == "-xmax_ell")
-		{
-			gnuplot_xmax_ell=atof(argv[i+1]);
-			i++;
-		}
+		//else if (string(argv[i]) == "-xmax_ell")
+		//{
+		//	gnuplot_xmax_ell=atof(argv[i+1]);
+		//	i++;
+		//}
 		else if (string(argv[i]) == "-compare_X")
 		{
 			compare[0]=atof(argv[i+1]);
@@ -710,7 +716,8 @@ int main(int argc, char *argv[])
 
 			if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
 			if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
-			if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);		
+			if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
+//			if (calcola_xmax_ell) massimo_opt(aminmax,bminmax,&gnuplot_xmax_ell);
 
 			if (alpha_calcolato_con_successo&&beta_calcolato_con_successo)
 			{
@@ -726,7 +733,7 @@ int main(int argc, char *argv[])
 			}
 
 			fprintf(confronti,"#Z");
-			fprintf(confronti," %+10s","Gradiente_F\n");
+			fprintf(confronti," %10s","Gradiente_F\n");
 
 			scrividati(0.0,alpha,beta,funzioni_ottiche);
 			scrividati_ellissi(0.0,aminmax,bminmax,ellissi);
