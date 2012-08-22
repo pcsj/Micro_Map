@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define DEBUG
+#define DEBUG
 //#define TEST_OPTICAL_FUNCTIONS
 #define CREATE_PNG
 
@@ -61,7 +61,7 @@ double *					assi_ellissi(double *, double);
 void						create_gnuplot_file(string , string , double *, int , double , double , double , string *,bool);
 double *					optics_T (double * , int , vector< vector <double> > );
 void						massimo(double * , double * ,double *);
-void						confronto (double *,double *,double ,double,double,FILE * ,bool );
+void						confronto (double *,double *,double ,double,double,FILE * ,bool *);
 
 
 
