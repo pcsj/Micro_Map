@@ -12,10 +12,10 @@ $ENERGY=30
 $X_MAX=1.5
 $Y_MAX_POS=0.1
 $Y_MAX_OPT=5
-$vero=$FALSE
+$vero=0
 $P_RIF=1
 $X_RIF=2.5
-$PERC=0.03
+$PERC=0.1
 #######
 $grad_d=${GRAD_DEF}
 $grad_f=${GRAD_FOC}
@@ -64,7 +64,7 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
             if (($lung_drift_m+$lung_drift_i) -gt (${LENGTH_TOTAL}+$lung_elem+$lung_elem))
             {
                 $lung_drift_m=0.5
-                $vero=$TRUE
+                $vero=1
             } 
 
 	        $riga="O 0.0 0.1"
@@ -111,7 +111,7 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
             $k=$k+1
             
             }
-            $vero=$FALSE
+            $vero=0
             $k=1    
             echo "Sono l'iteratore del secondo ciclo "$j
             $lung_elem=$lung_elem+$INCREASE_STEP_LENG
@@ -133,6 +133,11 @@ $a=0
 $i=0
 $j=0
 $k=0
+$grad_d=${GRAD_DEF}
+$grad_f=${GRAD_FOC}
+$lung_elem=${LENGTH_F}
+$lung_drift_m=0.5
+
      
 while ($a -le $NUMBER_OF_STEPS_FOC)
 {
@@ -144,15 +149,16 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
             {
             	if (Test-Path ".\graph_Funz_${a}_${i}_${j}_${k}.png")
 	            {
-	                Move-Item -Force graph_Funz_${a}_${i}_${j}_${k}.png  .\Funzioni_Ottiche\FOC_${grad_f}__DEFOC_${grad_d}__L_cel_${lung_elem}__drift_${lung_drift_m}.png
+	                Move-Item -Force graph_Funz_${a}_${i}_${j}_${k}.png  .\Funzioni_Ottiche\FOC_${grad_f+a*$INCREASE_STEP_GRAD}__DEFOC_${grad_d+i*$INCREASE_STEP_GRAD}__L_cel_${lung_elem+j*$INCREASE_STEP_LENG}__drift_${lung_drift_m+k*$INCREASE_STEP_LENG}.png
+                    #bisogna iterare anche i parametri grad_f ecc, basta moltiplicare il dato iniziale che deve essere riportato a quello iniziale per iteratore moltiplicato per incremento 
 	            }
 	            if (Test-Path ".\graph_Pos_${a}_${i}_${j}_${k}.png")
 	            {
-                    Move-Item -Force graph_Pos_${a}_${i}_${j}_${k}.png  .\Posizione_Particelle\FOC_${grad_f}__DEFOC_${grad_d}__L_cel_${lung_elem}__drift_${lung_drift_m}.png
+                    Move-Item -Force graph_Pos_${a}_${i}_${j}_${k}.png  .\Posizione_Particelle\FOC_${grad_f+a*$INCREASE_STEP_GRAD}__DEFOC_${grad_d+i*$INCREASE_STEP_GRAD}__L_cel_${lung_elem+j*$INCREASE_STEP_LENG}__drift_${lung_drift_m+k*$INCREASE_STEP_LENG}.png
                 }
 	            if (Test-Path ".\graph_Ell_${a}_${i}_${j}_${k}.png")
 	            {
-                    Move-Item -Force graph_Ell_${a}_${i}_${j}_${k}.png  .\Posizione_Particelle\FOC_${grad_f}__DEFOC_${grad_d}__L_cel_${lung_elem}__drift_${lung_drift_m}.png
+                    Move-Item -Force graph_Ell_${a}_${i}_${j}_${k}.png  .\Ellissi\FOC_${grad_f+a*$INCREASE_STEP_GRAD}__DEFOC_${grad_d+i*$INCREASE_STEP_GRAD}__L_cel_${lung_elem+j*$INCREASE_STEP_LENG}__drift_${lung_drift_m+k*$INCREASE_STEP_LENG}.png
                 }
                 $k=$k+1
             }

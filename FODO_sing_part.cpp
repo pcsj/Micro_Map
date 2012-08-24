@@ -358,7 +358,7 @@ void confronto (double * parametri_dati,double * parametri_ottenuti,double z,/*d
 		//fprintf(file,"%s",elemento_char);
 		//fprintf(file," %+10.5f ",gradiente_f);
 		*confronto_pos=true;
-		*conto_per_confronto++;
+		*conto_per_confronto+=1;
 	}
 }
 
@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
 //	double gnuplot_xmax_ell=0.;
 //	bool calcola_xmax_ell = true;
 	double percentuale=0.03;
-	int conto_per_confronto=1;
+	int conto_per_confronto=0;
 
 	double *compare=new double[2];
 	compare[0]=0.;
@@ -737,8 +737,8 @@ int main(int argc, char *argv[])
 				fprintf(ellissi,"%11s","p_y");
 			}
 
-			fprintf(confronti,"#Z");
-			fprintf(confronti," %10s","Gradiente_F\n");
+			//fprintf(confronti,"#Z");
+			//fprintf(confronti," %10s","Gradiente_F\n");
 
 			scrividati(0.0,alpha,beta,funzioni_ottiche);
 			scrividati_ellissi(0.0,aminmax,bminmax,ellissi);
@@ -836,7 +836,7 @@ int main(int argc, char *argv[])
 
 	double dl=0.;
 //	double lunghezza_accumulata=0.01;
-	double lunghezza_accumulata=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,nstep);
+	double lunghezza_accumulata=0.;
 
 	S=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,nstep);
 	for (int i=0;i<contatore;i++)
@@ -869,8 +869,8 @@ int main(int argc, char *argv[])
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,lunghezza_accumulata,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,lunghezza_accumulata,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
+//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
@@ -909,15 +909,15 @@ int main(int argc, char *argv[])
 					if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 					scrivi_pos_part(posizionePart,vett_i,S);
 				}
-				if (do_optics)
+				if (posso_fare_funzioni_ottiche)
 				{
 					F=simil(F,FxI[i],Fx[i]);
 					alpha=optics(F,FOC,&alpha_calcolato_con_successo);
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);		
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,lunghezza_accumulata,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,lunghezza_accumulata,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
+//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
@@ -955,15 +955,15 @@ int main(int argc, char *argv[])
 					if (calcola_ymax_pos) massimo_pos(vett_i,&gnuplot_ymax_pos);
 					scrivi_pos_part(posizionePart,vett_i,S);
 				}
-				if (do_optics)
+				if (posso_fare_funzioni_ottiche)
 				{
 					F=simil(F,DxI[i],Dx[i]);
 					alpha=optics(F,FOC,&alpha_calcolato_con_successo);
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,lunghezza_accumulata,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,lunghezza_accumulata,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
+//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
@@ -1060,6 +1060,7 @@ int main(int argc, char *argv[])
 
 /***********************************************************/
 
+	cout << "conto_per_confronto= "<<conto_per_confronto;
 	double *dati_rilevati=new double [conto_per_confronto];
 	for (int a=0;a<conto_per_confronto;a++)
 		dati_rilevati[a]=0.;
@@ -1084,12 +1085,13 @@ int main(int argc, char *argv[])
 	}
 
 	
-	cout << "posso_fare_funzioni_ottiche="<<posso_fare_funzioni_ottiche<<endl;
-	cout << "alpha_calcolato_con_successo="<<alpha_calcolato_con_successo<<endl;
-	cout << "beta_calcolato_con_successo="<<beta_calcolato_con_successo<<endl;
-	cout << "do_optics="<<do_optics<<endl;
-	cout << "confronto_pos="<<confronto_pos<<endl;
-	if (do_optics&&alpha_calcolato_con_successo&&beta_calcolato_con_successo&&confronto_pos)
+	//cout << "posso_fare_funzioni_ottiche="<<posso_fare_funzioni_ottiche<<endl;
+	//cout << "alpha_calcolato_con_successo="<<alpha_calcolato_con_successo<<endl;
+	//cout << "beta_calcolato_con_successo="<<beta_calcolato_con_successo<<endl;
+	//cout << "do_optics="<<do_optics<<endl;
+	//cout << "confronto_pos="<<confronto_pos<<endl;
+
+	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo&&confronto_pos)
 	{
 		if (gnuplot_xmax_opt > 0.) create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, gnuplot_xmax_opt, etichette_ottiche,dati_rilevati,conto_per_confronto);
 		else create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche,dati_rilevati,conto_per_confronto);
