@@ -710,8 +710,8 @@ int main(int argc, char *argv[])
 #endif
 		if ( (fabs((F[FOC][FOC]+F[FOC+1][FOC+1])*0.5) <= 1.) && (fabs((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*0.5) <= 1.))
 			posso_fare_funzioni_ottiche = true;
-		else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
-		cout << "posso_fare_funzioni_ottiche="<<posso_fare_funzioni_ottiche<<endl;
+		//else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
+		//cout << "posso_fare_funzioni_ottiche="<<posso_fare_funzioni_ottiche<<endl;
 		if (posso_fare_funzioni_ottiche)
 		{
 			alpha=optics(F,FOC,&alpha_calcolato_con_successo);
@@ -835,10 +835,9 @@ int main(int argc, char *argv[])
 
 
 	double dl=0.;
-//	double lunghezza_accumulata=0.01;
-	double lunghezza_accumulata=0.;
+	double lunghezza_accumulata=0.0;
 
-	S=lunghezza[0]/dsMap(lunghezza[0],lunghezzatotale,nstep);
+	S=0.0;
 	for (int i=0;i<contatore;i++)
 	{
 		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
@@ -846,8 +845,10 @@ int main(int argc, char *argv[])
 		{
 			fprintf(matrici_iniziali,"\n#Drift #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Drift #%d, dl = %f",i,dl);
-			while(S<=(lunghezza_accumulata+lunghezza[i]))	
+			while(S<=(lunghezza_accumulata+lunghezza[i]))
+			//for(int l=0;l<=(dsMap(lunghezza[i],lunghezzatotale,nstep));l++)
 			{
+				S+=dl;
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
 				if (do_transport)
@@ -881,13 +882,12 @@ int main(int argc, char *argv[])
 					aminmaxturk = assi_ellissi(alphaturk, emittanza);
 					bminmaxturk = assi_ellissi(betaturk, emittanza);
 					scrividati(S,alphaturk,betaturk,funzioni_ottiche_T);
-					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
+					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					
 					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
 #endif
 					}
 				}
-				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
@@ -895,8 +895,10 @@ int main(int argc, char *argv[])
 		{
 			fprintf(matrici_iniziali,"\n#Foc. #%d, dl = %f",i,dl);			
 			fprintf(funzioni_ottiche,"\n#Foc. #%d, dl = %f",i,dl);
-			while(S<=(lunghezza_accumulata+lunghezza[i]))	
+			while(S<=(lunghezza_accumulata+lunghezza[i]))
+			//for(int l=0;l<=(dsMap(lunghezza[i],lunghezzatotale,nstep));l++)
 			{
+				S+=dl;
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
 				if (do_transport)
@@ -933,7 +935,6 @@ int main(int argc, char *argv[])
 					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
 #endif
 				}
-				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
@@ -942,7 +943,9 @@ int main(int argc, char *argv[])
 			fprintf(matrici_iniziali,"\n#Defoc. #%d, dl = %f",i,dl);
 			fprintf(funzioni_ottiche,"\n#Defoc. #%d, dl = %f",i,dl);
 			while (S<=(lunghezza_accumulata+lunghezza[i]))
+			//for(int l=0;l<=(dsMap(lunghezza[i],lunghezzatotale,nstep));l++)
 			{
+				S+=dl;
 				fprintf(matrici_iniziali,"\n\n Num_Step %f", S);
 				scrivimatr2D(F,matrici_iniziali);
 				if (do_transport)
@@ -974,12 +977,11 @@ int main(int argc, char *argv[])
 					aminmaxturk = assi_ellissi(alphaturk, emittanza);
 					bminmaxturk = assi_ellissi(betaturk, emittanza);
 					scrividati(S,alphaturk,betaturk,funzioni_ottiche_T);
-					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
+					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					
 					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
 					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
 #endif
 				}
-				S+=dl;
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
@@ -1060,7 +1062,7 @@ int main(int argc, char *argv[])
 
 /***********************************************************/
 
-	cout << "conto_per_confronto= "<<conto_per_confronto;
+	//cout << "conto_per_confronto= "<<conto_per_confronto;
 	double *dati_rilevati=new double [conto_per_confronto];
 	for (int a=0;a<conto_per_confronto;a++)
 		dati_rilevati[a]=0.;
