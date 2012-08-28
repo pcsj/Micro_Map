@@ -310,23 +310,36 @@ void create_gnuplot_file(string gnuplot_filename, string data_filename, double *
 
 
 #ifdef TEST_OPTICAL_FUNCTIONS
-double *optics_T (double * A, int i, vector< vector <double> > O,double lunghezza, double ds)
+double *optics_T (double * A, int i, vector< vector <double> > O)
 {
-	double *alpha=new double[2];
-	double *beta=new double[2];
-	alpha[0] = A[0];
-	beta[0] = A[1];
-	while (lunghezza>=ds)
-	{
-		alpha[1] = alpha[0] - ((O[i][i]) * (O[i+1][i]) * beta[0])  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha[0])  -  (1./beta[0]) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha[0] * alpha[0]);
-		beta[1]= (O[i][i]) * (O[i][i]) * beta[0]  - 2. * (O[i][i]) * (O[i][i+1]) * alpha[0]  -  (1./beta[0]) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha[0] * alpha[0]));
-		alpha[0]=alpha[1];
-		beta[0]=beta[1];
-	}	
-	A[0]=alpha[0];
-	A[2]=beta[0];
+	double alpha=0.;
+	double beta=0.;
+	alpha = A[0];
+	beta = A[1];
+
+	A[0] = alpha - ((O[i][i]) * (O[i+1][i]) * beta)  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha)  -  (1./beta) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha * alpha);
+	A[1]= (O[i][i]) * (O[i][i]) * beta  - 2. * (O[i][i]) * (O[i][i+1]) * alpha  -  (1./beta) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha * alpha));
 	return A;
 }
+//double *optics_T (double * A, int i, vector< vector <double> > O,double lunghezza, double ds)
+//{
+//	double *alpha=new double[2];
+//	double *beta=new double[2];
+//	double S=0.;
+//	alpha[0] = A[0];
+//	beta[0] = A[1];
+//	while (lunghezza>=ds)
+//	{
+//		alpha[1] = alpha[0] - ((O[i][i]) * (O[i+1][i]) * beta[0])  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha[0])  -  (1./beta[0]) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha[0] * alpha[0]);
+//		beta[1]= (O[i][i]) * (O[i][i]) * beta[0]  - 2. * (O[i][i]) * (O[i][i+1]) * alpha[0]  -  (1./beta[0]) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha[0] * alpha[0]));
+//		alpha[0]=alpha[1];
+//		beta[0]=beta[1];
+//		S+=ds;
+//	}	
+//	A[0]=alpha[0];
+//	A[1]=beta[0];
+//	return A;
+//}
 #endif
 
 void massimo_opt(double * optics_x , double * optics_y,double * massimo_temp)
@@ -385,6 +398,7 @@ int main(int argc, char *argv[])
 #ifdef TEST_OPTICAL_FUNCTIONS
 	FILE * funzioni_ottiche_t=fopen("Funzioni_Ottiche_T.txt","w");
 	FILE * ellissi_t=fopen("Parametri_Ellissi_Funz_Ottiche_T.txt","w");
+	FILE * confronti_t=fopen("Math_rilevati_T.txt","w");
 #endif
 
 #ifdef DEBUG
@@ -417,15 +431,18 @@ int main(int argc, char *argv[])
 	double percentuale=0.03;
 	int conto_per_confronto=0;
 
-	double *compare=new double[2];
-	compare[0]=0.;
-	compare[1]=0.;
-	bool confronto_pos=false;
+	double *compare_x=new double[2];
+	double *compare_y=new double[2];
+	bool confronto_pos_x=false;
+	bool confronto_pos_y=false;
 
-	double paramIniz_X=0.;
-	double paramIniz_P=0.;
-	bool calcolo_own=true;
-
+	double *paramIniz_X=new double[2];
+	double *paramIniz_Y=new double[2];
+	int conto_per_confronto_t_x=0;
+	int conto_per_confronto_t_y=0;
+	bool fai_da_te=false;
+	bool confronto_pos_t_y=false;
+	bool confronto_pos_t_x=false;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -483,15 +500,16 @@ int main(int argc, char *argv[])
 		}
 		else if (string(argv[i]) == "-compare_X")
 		{
-			compare[0]=atof(argv[i+1]);
-			fprintf(matrici_iniziali,"\n%f\n",compare[0]);
-			i++;
+			compare_x[0]=atof(argv[i+1]);
+			compare_x[1]=atof(argv[i+2]);
+			i+=2;
 		}
-		else if (string(argv[i]) == "-compare_P")
+		else if (string(argv[i]) == "-compare_Y")
 		{
-			compare[1]=atof(argv[i+1]);
-			fprintf(matrici_iniziali,"\n%f\n",compare[1]);
-			i++;
+			compare_y[0]=atof(argv[i+1]);
+			compare_y[1]=atof(argv[i+2]);
+
+			i+=2;
 		}
 		else if (string(argv[i]) == "-perc")
 		{
@@ -508,11 +526,18 @@ int main(int argc, char *argv[])
 			nstep = atoi(argv[i+1]);
 			i++;
 		}
-		else if (string(argv[i]) == "-paramIniz")
+		else if (string(argv[i]) == "-paramIniz_X")
 		{
-			paramIniz_X = atoi(argv[i+1]);
-			paramIniz_P = atoi(argv[i+2]);
-			calcolo_own=false;
+			paramIniz_X[0] = atoi(argv[i+1]);
+			paramIniz_X[1] = atoi(argv[i+2]);
+			fai_da_te=true;
+			i+=2;
+		}
+		else if (string(argv[i]) == "-paramIniz_Y")
+		{
+			paramIniz_Y[0] = atoi(argv[i+1]);
+			paramIniz_Y[1] = atoi(argv[i+2]);
+			fai_da_te=true;
 			i+=2;
 		}
 		else
@@ -759,23 +784,28 @@ int main(int argc, char *argv[])
 #ifdef TEST_OPTICAL_FUNCTIONS
 		// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
 		// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
-			if (calcolo_own)
+			for (int i=0;i<2;i++)
 			{
-				for (int i=0;i<2;i++)
+				if (!fai_da_te)
 				{
 					ottiche_x_t[i]=alpha[i];
 					ottiche_y_t[i]=beta[i];
-					aminmax_x_t[i]=aminmax[i];
-					bminmax_y_t[i]=bminmax[i];
 				}
-				scrividati(0.0,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
-				scrividati_ellissi(0.0,bminmax_y_t,bminmax_y_t,ellissi_t);
-				if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
-				//if (calcola_ymax_ell) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
+				else
+				{
+					ottiche_x_t[i]=paramIniz_X[i];
+					ottiche_y_t[i]=paramIniz_Y[i];
+				}
 			}
+			aminmax_x_t = assi_ellissi(ottiche_x_t, emittanza);
+			bminmax_y_t = assi_ellissi(ottiche_y_t, emittanza);
+			scrividati(0.0,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+			scrividati_ellissi(0.0,bminmax_y_t,bminmax_y_t,ellissi_t);
+			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+			//if (calcola_ymax_ell) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
+#endif
 		}
 	}
-#endif
 
 	if(do_transport)
 	{
@@ -885,12 +915,26 @@ int main(int argc, char *argv[])
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare_x,aminmax,S,percentuale,confronti,&confronto_pos_x,&conto_per_confronto);
+					confronto(compare_y,bminmax,S,percentuale,confronti,&confronto_pos_y,&conto_per_confronto);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
+				
+#ifdef TEST_OPTICAL_FUNCTIONS
+					ottiche_x_t=optics_T(ottiche_x_t,FOC,O[i]);
+					ottiche_y_t=optics_T(ottiche_y_t,DEFOC,O[i]);
+					aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+					bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+					confronto(paramIniz_X,aminmax_x_t,S,percentuale,confronti_t,&confronto_pos_t_x,&conto_per_confronto_t_x);
+					confronto(paramIniz_Y,bminmax_y_t,S,percentuale,confronti_t,&confronto_pos_t_y,&conto_per_confronto_t_y);
+					scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+					scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);	
+					//if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+					//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+#endif
+
 					}
 				}
 			}
@@ -923,12 +967,26 @@ int main(int argc, char *argv[])
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);		
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare_x,aminmax,S,percentuale,confronti,&confronto_pos_x,&conto_per_confronto);
+					confronto(compare_y,bminmax,S,percentuale,confronti,&confronto_pos_y,&conto_per_confronto);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
+
+#ifdef TEST_OPTICAL_FUNCTIONS
+					ottiche_x_t=optics_T(ottiche_x_t,FOC,Fx[i]);
+					ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Fx[i]);
+					aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+					bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+					confronto(paramIniz_X,aminmax_x_t,S,percentuale,confronti_t,&confronto_pos_t_x,&conto_per_confronto_t_x);
+					confronto(paramIniz_Y,bminmax_y_t,S,percentuale,confronti_t,&confronto_pos_t_y,&conto_per_confronto_t_y);
+					scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+					scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);
+					//if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+					//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+#endif
+
 				}
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -960,61 +1018,31 @@ int main(int argc, char *argv[])
 					beta=optics(F,DEFOC,&beta_calcolato_con_successo);
 					aminmax = assi_ellissi(alpha, emittanza);
 					bminmax = assi_ellissi(beta, emittanza);
-					confronto(compare,aminmax,S,/*gradiente[i],*/percentuale,confronti,&confronto_pos,/*elemento[i],*/&conto_per_confronto);
-//					confronto(compare,bminmax,S,gradiente[i],percentuale,confronti,&confronto_pos,elemento[i]);
+					confronto(compare_x,aminmax,S,percentuale,confronti,&confronto_pos_x,&conto_per_confronto);
+					confronto(compare_y,bminmax,S,percentuale,confronti,&confronto_pos_y,&conto_per_confronto);
 					scrividati(S,alpha,beta,funzioni_ottiche);
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
+
+#ifdef TEST_OPTICAL_FUNCTIONS
+					ottiche_x_t=optics_T(ottiche_x_t,FOC,Dx[i]);
+					ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Dx[i]);
+					aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+					bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+					confronto(paramIniz_X,aminmax_x_t,S,percentuale,confronti_t,&confronto_pos_t_x,&conto_per_confronto_t_x);
+					confronto(paramIniz_Y,bminmax_y_t,S,percentuale,confronti_t,&confronto_pos_t_y,&conto_per_confronto_t_y);
+					scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+					scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);
+					//if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+					//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+#endif
+
 				}
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
 	}
-
-#ifdef TEST_OPTICAL_FUNCTIONS
-	lunghezza_accumulata=0.0;
-	for (int i=0; i < contatore; i++)
-	{
-		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
-		if (elemento[i] == "O")
-		{
-			ottiche_x_t=optics_T(ottiche_x_t,FOC,O[i],lunghezza[i],dl);
-			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,O[i],lunghezza[i],dl);
-			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
-			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
-			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
-			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
-			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
-			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
-			lunghezza_accumulata+=lunghezza[i];
-		}
-		else if (elemento[i] == "F")
-		{
-			ottiche_x_t=optics_T(ottiche_x_t,FOC,Fx[i],lunghezza[i],dl);
-			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Fx[i],lunghezza[i],dl);
-			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
-			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
-			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
-			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
-			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
-			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
-			lunghezza_accumulata+=lunghezza[i];
-		}
-		else if (elemento[i] == "D")
-		{
-			ottiche_x_t=optics_T(ottiche_x_t,FOC,Dx[i],lunghezza[i],dl);
-			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Dx[i],lunghezza[i],dl);
-			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
-			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
-			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
-			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
-			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
-			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
-			lunghezza_accumulata+=lunghezza[i];
-		}
-	}
-#endif
 
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
@@ -1026,6 +1054,7 @@ int main(int argc, char *argv[])
 
 #ifdef TEST_OPTICAL_FUNCTIONS
 	fclose(funzioni_ottiche_t);
+	fclose(ellissi_t);
 #endif
 
 	string *etichette_posizione = new string[8];
@@ -1095,7 +1124,7 @@ int main(int argc, char *argv[])
 	double *dati_rilevati=new double [conto_per_confronto];
 	for (int a=0;a<conto_per_confronto;a++)
 		dati_rilevati[a]=0.;
-	if (confronto_pos)
+	if (confronto_pos_x||confronto_pos_y)
 	{
 		ifstream confro;
 		confro.open("Math_rilevati.txt");
@@ -1108,7 +1137,7 @@ int main(int argc, char *argv[])
 /***********************************************************/
 
 
-	if (do_transport&&confronto_pos)
+	if (do_transport&&(confronto_pos_x||confronto_pos_y))
 	{
 		if (gnuplot_xmax_pos > 0.) create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, gnuplot_xmax_pos, etichette_posizione,dati_rilevati,conto_per_confronto);
 		else create_gnuplot_file( "Posizione.plt", "Posizione_Particelle.txt", lunghezza, contatore, gnuplot_ymax_pos ,0.0, lunghezza_accumulata, etichette_posizione,dati_rilevati,conto_per_confronto);
@@ -1122,18 +1151,23 @@ int main(int argc, char *argv[])
 	//cout << "do_optics="<<do_optics<<endl;
 	//cout << "confronto_pos="<<confronto_pos<<endl;
 
-	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo&&confronto_pos)
+	if (alpha_calcolato_con_successo&&beta_calcolato_con_successo&&(confronto_pos_x||confronto_pos_y))
 	{
 		if (gnuplot_xmax_opt > 0.) create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, gnuplot_xmax_opt, etichette_ottiche,dati_rilevati,conto_per_confronto);
 		else create_gnuplot_file( "Funzioni_Ottiche.plt", "Funzioni_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche,dati_rilevati,conto_per_confronto);
 		create_gnuplot_file( "Parametri_Ellissi.plt", "Parametri_Ellissi_Funz_Ottiche.txt", lunghezza, contatore, gnuplot_ymax_ell ,0.0, lunghezza_accumulata, etichette_ellissi,dati_rilevati,conto_per_confronto);
 		system ("gnuplot Funzioni_Ottiche.plt");
 		system ("gnuplot Parametri_Ellissi.plt");
-#ifdef TEST_OPTICAL_FUNCTIONS
-		create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,dati_rilevati,conto_per_confronto);
-//		system ("gnuplot Funzioni_Ottiche_T.plt");
-#endif
 
+#ifdef TEST_OPTICAL_FUNCTIONS
+		if (confronto_pos_t_x||confronto_pos_t_y)
+		{
+			create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,dati_rilevati,conto_per_confronto);
+			create_gnuplot_file( "Parametri_Ellissi_T.plt", "Parametri_Ellissi_Funz_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,dati_rilevati,conto_per_confronto);
+			system ("gnuplot Funzioni_Ottiche_T.plt");
+			system ("gnuplot Parametri_Ellissi_T.plt");
+		}
+#endif
 	}
 	else	
 	{
@@ -1150,8 +1184,8 @@ int main(int argc, char *argv[])
 #endif
 	} 
 
-	cout << "Confronto: "<<confronto_pos<<endl;
-	if (confronto_pos==false)
+	//cout << "Confronto: "<<confronto_pos<<endl;
+	if ((confronto_pos_x==false)&&(confronto_pos_y==false))
 	{
 #if defined (__linux)
 		system ("rm Math_rilevati.txt"); 
@@ -1160,6 +1194,16 @@ int main(int argc, char *argv[])
 #endif
 	}
 
+#ifdef TEST_OPTICAL_FUNCTIONS
+	if ((confronto_pos_t_x==false)&&(confronto_pos_t_y==false))
+	{
+#if defined (__linux)
+		system ("rm Math_rilevati.txt"); 
+#elif defined (_WIN32) || defined (_WIN64)
+		system ("del Math_rilevati.txt"); 
+#endif
+	}
+#endif
 
 #ifdef DEBUG
 	fclose(outputDEBUG);

@@ -1,21 +1,24 @@
-$GRAD_DEF=8.0
-$GRAD_FOC=8.0
-$LENGTH_TOTAL=1.5
+$GRAD_DEF=5.0
+$GRAD_FOC=5.0
+$LENGTH_TOTAL=2.0
 $LENGTH_F=0.1
-$NUMBER_OF_STEPS_IN_SCAN=10
-$NUMBER_OF_STEPS_DRIFT=10
-$NUMBER_OF_STEPS_FOC=10
-$INCREASE_STEP_GRAD=2
-$INCREASE_STEP_LENG=0.05
+$NUMBER_OF_STEPS_IN_SCAN=50
+$NUMBER_OF_STEPS_DRIFT=50
+$NUMBER_OF_STEPS_FOC=50
+$INCREASE_STEP_GRAD=0.5
+$INCREASE_STEP_LENG=0.01
 $NUMBER_OF_STEP_PER_SIM=500
 $ENERGY=30
 $X_MAX=1.5
 $Y_MAX_POS=0.1
 $Y_MAX_OPT=5
-$vero=0
-$P_RIF=1
-$X_RIF=2.5
-$PERC=0.03
+$X_P_RIF=1
+$X_X_RIF=2.5
+$Y_P_RIF=1
+$Y_X_RIF=2.5
+$CONFRONTO_ASSI_X=0.5
+$CONFRONTO_ASSI_Y=0.1
+$PERC=0.05
 #######
 $grad_d=${GRAD_DEF}
 $grad_f=${GRAD_FOC}
@@ -44,8 +47,14 @@ new-Item -type directory ("Posizione_Particelle")}
 if (!(Test-Path "Math_rilevati")){
 new-Item -type directory ("Math_rilevati")}
 
+if (!(Test-Path "Funzioni_Ottiche_T")){
+new-Item -type directory ("Funzioni_Ottiche_T")}
+
 if (!(Test-Path "Ellissi")){
 new-Item -type directory ("Ellissi")}
+
+if (!(Test-Path "Ellissi_T")){
+new-Item -type directory ("Ellissi_T")}
 
 
 while ($a -le $NUMBER_OF_STEPS_FOC)
@@ -87,12 +96,16 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
     
             $riga="O 0.0 $lung_drift_i"
             out-file -filepath .\parametri.txt -inputobject $riga -append -encoding ASCII
-            .\FODO_sing_part.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -compare_X $X_RIF -compare_P $P_RIF -perc $PERC
+            .\FODO_sing_part.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -compare_X $X_X_RIF $X_P_RIF -compare_Y $Y_X_RIF $Y_P_RIF -perc $PERC -paramIniz_X $CONFRONTO_ASSI_X -paramIniz_Y $CONFRONTO_ASSI_Y
     	    #-xmax_opt $X_MAX -xmax_pos $X_MAX
         
             if (Test-Path ".\graph_Funzioni_Ottiche.png")
             {
 	           Move-Item -Force graph_Funzioni_Ottiche.png  .\Funzioni_Ottiche\Def_${grad_d}__Foc_${grad_f}__Lelem_${lung_elem}__Ldri${lung_drift_m}.png
+	        }
+            if (Test-Path ".\graph_Funzioni_Ottiche_T.png")
+            {
+	           Move-Item -Force graph_Funzioni_Ottiche_T.png  .\Funzioni_Ottiche_T\Def_${grad_d}__Foc_${grad_f}__Lelem_${lung_elem}__Ldri${lung_drift_m}.png
 	        }
             if (Test-Path ".\graph_Posizione_Particelle.png")
 	        {
@@ -101,6 +114,10 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
             if (Test-Path ".\graph_Parametri_Ellissi_Funz_Ottiche.png")
 	        {
                Move-Item -Force graph_Parametri_Ellissi_Funz_Ottiche.png  .\Ellissi\Def_${grad_d}__Foc_${grad_f}__Lelem_${lung_elem}__Ldri${lung_drift_m}.png
+            }
+            if (Test-Path ".\graph_Parametri_Ellissi_Funz_Ottiche_T.png")
+	        {
+               Move-Item -Force graph_Parametri_Ellissi_Funz_Ottiche_T.png  .\Ellissi_T\Def_${grad_d}__Foc_${grad_f}__Lelem_${lung_elem}__Ldri${lung_drift_m}.png
             }
             if (Test-Path ".\Math_rilevati.txt")
 	        {            
