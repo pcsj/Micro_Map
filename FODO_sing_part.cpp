@@ -440,7 +440,8 @@ int main(int argc, char *argv[])
 	double *paramIniz_Y=new double[2];
 	int conto_per_confronto_t_x=0;
 	int conto_per_confronto_t_y=0;
-	bool fai_da_te=false;
+	bool fai_da_te_x=false;
+	bool fai_da_te_y=false;
 	bool confronto_pos_t_y=false;
 	bool confronto_pos_t_x=false;
 
@@ -530,14 +531,14 @@ int main(int argc, char *argv[])
 		{
 			paramIniz_X[0] = atoi(argv[i+1]);
 			paramIniz_X[1] = atoi(argv[i+2]);
-			fai_da_te=true;
+			fai_da_te_x=true;
 			i+=2;
 		}
 		else if (string(argv[i]) == "-paramIniz_Y")
 		{
 			paramIniz_Y[0] = atoi(argv[i+1]);
 			paramIniz_Y[1] = atoi(argv[i+2]);
-			fai_da_te=true;
+			fai_da_te_x=true;
 			i+=2;
 		}
 		else
@@ -786,21 +787,33 @@ int main(int argc, char *argv[])
 		// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
 			for (int i=0;i<2;i++)
 			{
-				if (!fai_da_te)
+				if (!(fai_da_te_x&&fai_da_te_y))
 				{
 					ottiche_x_t[i]=alpha[i];
 					ottiche_y_t[i]=beta[i];
+				}
+				else if (fai_da_te_x)
+				{
+					ottiche_x_t[i]=paramIniz_X[i];
+					ottiche_y_t[i]=paramIniz_X[i];
+
+				}
+				else if (fai_da_te_y)
+				{
+					ottiche_x_t[i]=paramIniz_Y[i];
+					ottiche_y_t[i]=paramIniz_Y[i];
 				}
 				else
 				{
 					ottiche_x_t[i]=paramIniz_X[i];
 					ottiche_y_t[i]=paramIniz_Y[i];
+
 				}
 			}
 			aminmax_x_t = assi_ellissi(ottiche_x_t, emittanza);
 			bminmax_y_t = assi_ellissi(ottiche_y_t, emittanza);
 			scrividati(0.0,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
-			scrividati_ellissi(0.0,bminmax_y_t,bminmax_y_t,ellissi_t);
+			scrividati_ellissi(0.0,aminmax_x_t,bminmax_y_t,ellissi_t);
 			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
 			//if (calcola_ymax_ell) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
 #endif
@@ -1198,9 +1211,9 @@ int main(int argc, char *argv[])
 	if ((confronto_pos_t_x==false)&&(confronto_pos_t_y==false))
 	{
 #if defined (__linux)
-		system ("rm Math_rilevati.txt"); 
+		system ("rm Math_rilevati_T.txt"); 
 #elif defined (_WIN32) || defined (_WIN64)
-		system ("del Math_rilevati.txt"); 
+		system ("del Math_rilevati_T.txt"); 
 #endif
 	}
 #endif
