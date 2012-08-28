@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
 		{
 			paramIniz_Y[0] = atoi(argv[i+1]);
 			paramIniz_Y[1] = atoi(argv[i+2]);
-			fai_da_te_x=true;
+			fai_da_te_y=true;
 			i+=2;
 		}
 		else
@@ -1208,14 +1208,14 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef TEST_OPTICAL_FUNCTIONS
-	if ((confronto_pos_t_x==false)&&(confronto_pos_t_y==false))
-	{
-#if defined (__linux)
-		system ("rm Math_rilevati_T.txt"); 
-#elif defined (_WIN32) || defined (_WIN64)
-		system ("del Math_rilevati_T.txt"); 
-#endif
-	}
+//	if ((confronto_pos_t_x==false)&&(confronto_pos_t_y==false))
+//	{
+//#if defined (__linux)
+//		system ("rm Math_rilevati_T.txt"); 
+//#elif defined (_WIN32) || defined (_WIN64)
+//		system ("del Math_rilevati_T.txt"); 
+//#endif
+//	}
 #endif
 
 #ifdef DEBUG
