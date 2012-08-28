@@ -310,15 +310,21 @@ void create_gnuplot_file(string gnuplot_filename, string data_filename, double *
 
 
 #ifdef TEST_OPTICAL_FUNCTIONS
-double *optics_T (double * A, int i, vector< vector <double> > O)
+double *optics_T (double * A, int i, vector< vector <double> > O,double lunghezza, double ds)
 {
-	double alpha=0.;
-	double beta=0.;
-	alpha = A[0];
-	beta = A[1];
-
-	A[0] = alpha - ((O[i][i]) * (O[i+1][i]) * beta)  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha)  -  (1./beta) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha * alpha);
-	A[1]= (O[i][i]) * (O[i][i]) * beta  - 2. * (O[i][i]) * (O[i][i+1]) * alpha  -  (1./beta) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha * alpha));
+	double *alpha=new double[2];
+	double *beta=new double[2];
+	alpha[0] = A[0];
+	beta[0] = A[1];
+	while (lunghezza>=ds)
+	{
+		alpha[1] = alpha[0] - ((O[i][i]) * (O[i+1][i]) * beta[0])  +  (2. * (O[i+1][i]) * (O[i][i+1]) * alpha[0])  -  (1./beta[0]) * (O[i][i+1]) * (O[i+1][i+1]) * (1. - alpha[0] * alpha[0]);
+		beta[1]= (O[i][i]) * (O[i][i]) * beta[0]  - 2. * (O[i][i]) * (O[i][i+1]) * alpha[0]  -  (1./beta[0]) * (O[i][i+1]) * (O[i][i+1]) * (1. - (alpha[0] * alpha[0]));
+		alpha[0]=alpha[1];
+		beta[0]=beta[1];
+	}	
+	A[0]=alpha[0];
+	A[2]=beta[0];
 	return A;
 }
 #endif
@@ -378,6 +384,7 @@ int main(int argc, char *argv[])
 	FILE * confronti=fopen("Math_rilevati.txt","w");
 #ifdef TEST_OPTICAL_FUNCTIONS
 	FILE * funzioni_ottiche_t=fopen("Funzioni_Ottiche_T.txt","w");
+	FILE * ellissi_t=fopen("Parametri_Ellissi_Funz_Ottiche_T.txt","w");
 #endif
 
 #ifdef DEBUG
@@ -414,6 +421,11 @@ int main(int argc, char *argv[])
 	compare[0]=0.;
 	compare[1]=0.;
 	bool confronto_pos=false;
+
+	double paramIniz_X=0.;
+	double paramIniz_P=0.;
+	bool calcolo_own=true;
+
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -469,11 +481,6 @@ int main(int argc, char *argv[])
 			calcola_ymax_ell = false;
 			i++;
 		}
-		//else if (string(argv[i]) == "-xmax_ell")
-		//{
-		//	gnuplot_xmax_ell=atof(argv[i+1]);
-		//	i++;
-		//}
 		else if (string(argv[i]) == "-compare_X")
 		{
 			compare[0]=atof(argv[i+1]);
@@ -500,6 +507,13 @@ int main(int argc, char *argv[])
 		{
 			nstep = atoi(argv[i+1]);
 			i++;
+		}
+		else if (string(argv[i]) == "-paramIniz")
+		{
+			paramIniz_X = atoi(argv[i+1]);
+			paramIniz_P = atoi(argv[i+2]);
+			calcolo_own=false;
+			i+=2;
 		}
 		else
 		{
@@ -586,6 +600,15 @@ int main(int argc, char *argv[])
 	bool alpha_calcolato_con_successo=false;
 	bool beta_calcolato_con_successo=false;
 
+#ifdef TEST_OPTICAL_FUNCTIONS
+	double *ottiche_x_t = new double[2];
+	double *ottiche_y_t = new double[2];
+	double *aminmax_x_t = new double[2];
+	double *bminmax_y_t = new double[2];
+	for (int i = 0; i < 2; i++) ottiche_x_t[i] = ottiche_y_t[i] = aminmax_x_t[i] = bminmax_y_t[i] = 0.;
+#endif
+
+
 	double gamma_beta=sqrt(2.0*energia/MP_MEV);
 	double gamma_v=gamma_beta*SPEED_OF_LIGHT;
 	double *f1 =new double [contatore];
@@ -658,8 +681,7 @@ int main(int argc, char *argv[])
 #endif	
 
 /************************************************************************/
-
-
+	
 	if (do_optics)
 	{
 		vector <vector <double> > compos(4,vector<double>(4,0));
@@ -697,17 +719,10 @@ int main(int argc, char *argv[])
 			for(int a=0;a<4;a++)
 				F[i][a]=compos[i][a];
 
-
 //		Calcolo Funzioni OTTICHE
 
 		for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
-#ifdef TEST_OPTICAL_FUNCTIONS
-		double *alphaturk = new double[2];
-		double *betaturk = new double[2];
-		double *aminmaxturk = new double[2];
-		double *bminmaxturk = new double[2];
-		for (int i = 0; i < 2; i++) alphaturk[i] = betaturk[i] = aminmaxturk[i] = bminmaxturk[i] = 0.;
-#endif
+
 		if ( (fabs((F[FOC][FOC]+F[FOC+1][FOC+1])*0.5) <= 1.) && (fabs((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*0.5) <= 1.))
 			posso_fare_funzioni_ottiche = true;
 		//else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
@@ -737,9 +752,6 @@ int main(int argc, char *argv[])
 				fprintf(ellissi,"%11s","p_y");
 			}
 
-			//fprintf(confronti,"#Z");
-			//fprintf(confronti," %10s","Gradiente_F\n");
-
 			scrividati(0.0,alpha,beta,funzioni_ottiche);
 			scrividati_ellissi(0.0,aminmax,bminmax,ellissi);
 
@@ -747,20 +759,23 @@ int main(int argc, char *argv[])
 #ifdef TEST_OPTICAL_FUNCTIONS
 		// non credo sia giusto inizializzare alphaturk e betaturk con l'altra funzione ottica
 		// ma le "*turk" sono ricorsive e non permettono un bootstrap per ora...
-		for (int i=0;i<2;i++)
-		{
-			alphaturk[i]=alpha[i];
-			betaturk[i]=beta[i];
-			aminmaxturk[i]=aminmax[i];
-			bminmaxturk[i]=bminmax[i];
-		}
-		scrividati(0.0,alphaturk,betaturk,funzioni_ottiche_t);
-		scrividati_ellissi(0.0,aminmaxturk,bminmaxturk,ellissi_t);
-		if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
-		if (calcola_ymax_ell) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
-#endif
+			if (calcolo_own)
+			{
+				for (int i=0;i<2;i++)
+				{
+					ottiche_x_t[i]=alpha[i];
+					ottiche_y_t[i]=beta[i];
+					aminmax_x_t[i]=aminmax[i];
+					bminmax_y_t[i]=bminmax[i];
+				}
+				scrividati(0.0,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+				scrividati_ellissi(0.0,bminmax_y_t,bminmax_y_t,ellissi_t);
+				if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+				//if (calcola_ymax_ell) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
+			}
 		}
 	}
+#endif
 
 	if(do_transport)
 	{
@@ -836,8 +851,8 @@ int main(int argc, char *argv[])
 
 	double dl=0.;
 	double lunghezza_accumulata=0.0;
-
 	S=0.0;
+
 	for (int i=0;i<contatore;i++)
 	{
 		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
@@ -876,16 +891,6 @@ int main(int argc, char *argv[])
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
-#ifdef TEST_OPTICAL_FUNCTIONS
-					alphaturk=optics_T(alphaturk,FOC,O[i]);
-					betaturk=optics_T(betaturk,DEFOC,O[i]);
-					aminmaxturk = assi_ellissi(alphaturk, emittanza);
-					bminmaxturk = assi_ellissi(betaturk, emittanza);
-					scrividati(S,alphaturk,betaturk,funzioni_ottiche_T);
-					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					
-					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
-					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
-#endif
 					}
 				}
 			}
@@ -924,16 +929,6 @@ int main(int argc, char *argv[])
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
-#ifdef TEST_OPTICAL_FUNCTIONS
-					alphaturk=optics_T(alphaturk,FOC,Fx[i]);
-					betaturk=optics_T(betaturk,DEFOC,Fx[i]);
-					aminmaxturk = assi_ellissi(alphaturk, emittanza);
-					bminmaxturk = assi_ellissi(betaturk, emittanza);
-					scrividati(S,alphaturk,betaturk,funzioni_ottiche_T);
-					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);
-					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
-					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
-#endif
 				}
 			}
 			lunghezza_accumulata+=lunghezza[i];
@@ -971,21 +966,55 @@ int main(int argc, char *argv[])
 					scrividati_ellissi(S,aminmax,bminmax,ellissi);
 					if (calcola_ymax_ell) massimo_opt(aminmax,bminmax,&gnuplot_ymax_ell);
 					if (calcola_ymax_opt) massimo_opt(alpha,beta,&gnuplot_ymax_opt);
-#ifdef TEST_OPTICAL_FUNCTIONS
-					alphaturk=optics_T(alphaturk,FOC,Dx[i]);
-					betaturk=optics_T(betaturk,DEFOC,Dx[i]);
-					aminmaxturk = assi_ellissi(alphaturk, emittanza);
-					bminmaxturk = assi_ellissi(betaturk, emittanza);
-					scrividati(S,alphaturk,betaturk,funzioni_ottiche_T);
-					scrividati_ellissi(S,aminmaxturk,bminmaxturk,ellissi_T);					
-					if (calcola_ymax_opt_T) massimo_opt(alphaturk,betaturk,&gnuplot_ymax_opt_T);
-					if (calcola_ymax_ell_T) massimo_opt(aminmaxturk,bminmaxturk,&gnuplot_ymax_ell);
-#endif
 				}
 			}
 			lunghezza_accumulata+=lunghezza[i];
 		}
 	}
+
+#ifdef TEST_OPTICAL_FUNCTIONS
+	lunghezza_accumulata=0.0;
+	for (int i=0; i < contatore; i++)
+	{
+		dl=lunghezza[i]/dsMap(lunghezza[i],lunghezzatotale,nstep);
+		if (elemento[i] == "O")
+		{
+			ottiche_x_t=optics_T(ottiche_x_t,FOC,O[i],lunghezza[i],dl);
+			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,O[i],lunghezza[i],dl);
+			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
+			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+			lunghezza_accumulata+=lunghezza[i];
+		}
+		else if (elemento[i] == "F")
+		{
+			ottiche_x_t=optics_T(ottiche_x_t,FOC,Fx[i],lunghezza[i],dl);
+			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Fx[i],lunghezza[i],dl);
+			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
+			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+			lunghezza_accumulata+=lunghezza[i];
+		}
+		else if (elemento[i] == "D")
+		{
+			ottiche_x_t=optics_T(ottiche_x_t,FOC,Dx[i],lunghezza[i],dl);
+			ottiche_y_t=optics_T(ottiche_y_t,DEFOC,Dx[i],lunghezza[i],dl);
+			aminmax_x_t = assi_ellissi(aminmax_x_t, emittanza);
+			bminmax_y_t = assi_ellissi(bminmax_y_t, emittanza);
+			scrividati(S,ottiche_x_t,ottiche_y_t,funzioni_ottiche_t);
+			scrividati_ellissi(S,aminmax_x_t,bminmax_y_t,ellissi_t);					
+			if (calcola_ymax_opt_T) massimo_opt(ottiche_x_t,ottiche_y_t,&gnuplot_ymax_opt_T);
+			//if (calcola_ymax_ell_T) massimo_opt(aminmax_x_t,bminmax_y_t,&gnuplot_ymax_ell);
+			lunghezza_accumulata+=lunghezza[i];
+		}
+	}
+#endif
 
 	fclose(funzioni_ottiche);
 	fclose(matrici_iniziali);
