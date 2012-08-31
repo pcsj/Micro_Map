@@ -59,7 +59,7 @@ void						scrivi_pos_part(FILE * ,double *,double );
 vector< vector <double> >	simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 double *					assi_ellissi(double *, double);
 void						create_gnuplot_file(string , string , double *, int , double , double , double , string *);
-double *					optics_T (double * , int , vector< vector <double> > );
+void						optics_T (double ** , int , vector< vector <double> > );
 void						massimo(double * , double * ,double *);
 void						confronto (double *,double *,double ,double,double,FILE * ,bool *);
 
