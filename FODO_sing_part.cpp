@@ -448,13 +448,13 @@ int main(int argc, char *argv[])
 
 	double *paramIniz_X=new double[2];
 	double *paramIniz_Y=new double[2];
-	bool fai_da_te_x=false;
-	bool fai_da_te_y=false;
 #ifdef TEST_OPTICAL_FUNCTIONS
 	int conto_per_confronto_t_x=0;
 	int conto_per_confronto_t_y=0;
 	bool confronto_pos_t_y=false;
 	bool confronto_pos_t_x=false;
+	bool fai_da_te_x=false;
+	bool fai_da_te_y=false;
 #endif
 
 	for (int i = 1; i < argc; i++)
@@ -543,14 +543,18 @@ int main(int argc, char *argv[])
 		{
 			paramIniz_X[0] = atoi(argv[i+1]);
 			paramIniz_X[1] = atoi(argv[i+2]);
+#ifdef TEST_OPTICAL_FUNCTIONS
 			fai_da_te_x=true;
+#endif
 			i+=2;
 		}
 		else if (string(argv[i]) == "-paramIniz_Y")
 		{
 			paramIniz_Y[0] = atoi(argv[i+1]);
 			paramIniz_Y[1] = atoi(argv[i+2]);
+#ifdef TEST_OPTICAL_FUNCTIONS
 			fai_da_te_y=true;
+#endif
 			i+=2;
 		}
 		else
