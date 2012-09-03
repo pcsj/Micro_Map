@@ -1,12 +1,12 @@
-$GRAD_DEF=5.0
-$GRAD_FOC=5.0
-$LENGTH_TOTAL=2.0
+$GRAD_DEF=8.0
+$GRAD_FOC=8.0
+$LENGTH_TOTAL=1.5
 $LENGTH_F=0.1
-$NUMBER_OF_STEPS_IN_SCAN=50
-$NUMBER_OF_STEPS_DRIFT=50
-$NUMBER_OF_STEPS_FOC=50
-$INCREASE_STEP_GRAD=0.5
-$INCREASE_STEP_LENG=0.01
+$NUMBER_OF_STEPS_IN_SCAN=10
+$NUMBER_OF_STEPS_DRIFT=10
+$NUMBER_OF_STEPS_FOC=10
+$INCREASE_STEP_GRAD=2
+$INCREASE_STEP_LENG=0.05
 $NUMBER_OF_STEP_PER_SIM=500
 $ENERGY=30
 $X_MAX=1.5
@@ -17,7 +17,7 @@ $X_X_RIF=2.5
 $Y_P_RIF=1
 $Y_X_RIF=2.5
 $CONFRONTO_ASSI_X=0.5
-$CONFRONTO_ASSI_Y=0.1
+$CONFRONTO_ASSI_P=0.1
 $PERC=0.05
 #######
 $grad_d=${GRAD_DEF}
@@ -96,7 +96,7 @@ while ($a -le $NUMBER_OF_STEPS_FOC)
     
             $riga="O 0.0 $lung_drift_i"
             out-file -filepath .\parametri.txt -inputobject $riga -append -encoding ASCII
-            .\FODO_sing_part.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -compare_X $X_X_RIF $X_P_RIF -compare_Y $Y_X_RIF $Y_P_RIF -perc $PERC -paramIniz_X $CONFRONTO_ASSI_X -paramIniz_Y $CONFRONTO_ASSI_Y
+            .\FODO_sing_part.exe -p .\parametri.txt -i .\inputdata.txt -optics -transport -nstep $NUMBER_OF_STEP_PER_SIM -compare_X $X_X_RIF $X_P_RIF -compare_Y $Y_X_RIF $Y_P_RIF -perc $PERC
     	    #-xmax_opt $X_MAX -xmax_pos $X_MAX
         
             if (Test-Path ".\graph_Funzioni_Ottiche.png")

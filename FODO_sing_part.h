@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 //#define DEBUG
-//#define TEST_OPTICAL_FUNCTIONS
+#define TEST_OPTICAL_FUNCTIONS
 #define CREATE_PNG
 
 #include <cstdio> 
@@ -59,7 +59,7 @@ void						scrivi_pos_part(FILE * ,double *,double );
 vector< vector <double> >	simil(vector< vector <double> > ,vector< vector <double> > , vector< vector <double> >);
 double *					assi_ellissi(double *, double);
 void						create_gnuplot_file(string , string , double *, int , double , double , double , string *);
-void						optics_T (double ** , int , vector< vector <double> > );
+double *					optics_T (double * , int , vector< vector <double> > );
 void						massimo(double * , double * ,double *);
 void						confronto (double *,double *,double ,double,double,FILE * ,bool *);
 
