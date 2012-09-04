@@ -18,7 +18,7 @@ $Y_P_RIF=1
 $Y_X_RIF=2.5
 $CONFRONTO_ASSI_X=0.5
 $CONFRONTO_ASSI_P=0.1
-$PERC=0.05
+$PERC=0.03
 #######
 $grad_d=${GRAD_DEF}
 $grad_f=${GRAD_FOC}
