@@ -43,9 +43,9 @@ double *optics(vector< vector <double> > N, int i,bool * effettuato_con_successo
 	//	return A;		// ritorna zero e basta: al limite dobbiamo lavorarci su in altro modo, fare gli ifndef non funziona perche' sono macro per il preprocessore, non variabili valutate in fase di runtime!
 	//}
 
-	//omega = acos((N[i][i]+N[i+1][i+1])*0.5);
+	omega = acos((N[i][i]+N[i+1][i+1])*0.5);
 
-	omega=sqrt(-(N[i][i]+N[i+1][i+1])*(N[i][i]+N[i+1][i+1])+4)/(N[i][i]+N[i+1][i+1]);
+	//omega=sqrt(-(N[i][i]+N[i+1][i+1])*(N[i][i]+N[i+1][i+1])+4)/(N[i][i]+N[i+1][i+1]);
 	s=sin(omega);
 	
 	if ( s*(N[i][i+1]) < 0.) s=-s;
