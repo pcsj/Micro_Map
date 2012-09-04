@@ -1107,8 +1107,8 @@ int main(int argc, char *argv[])
 	etichette_ottiche_T[7] = "Beta_y";
 #endif
 
-	etichette_ellissi_T[0] = "Parametri_Ellissi_Funz_Ottiche";
-	etichette_ellissi_T[1] = "Parametri Ellissi Funz Ottiche";
+	etichette_ellissi_T[0] = "Parametri_Ellissi_Funz_Ottiche_T";
+	etichette_ellissi_T[1] = "Parametri Ellissi Funz Ottiche_T";
 	etichette_ellissi_T[2] = "z (m)";
 	etichette_ellissi_T[3] = "X , P";
 	etichette_ellissi_T[4] = "Xmax";
@@ -1159,13 +1159,13 @@ int main(int argc, char *argv[])
 		system ("gnuplot Parametri_Ellissi.plt");
 
 #ifdef TEST_OPTICAL_FUNCTIONS
-		if (confronto_pos_t_x||confronto_pos_t_y)
-		{
+		//if (confronto_pos_t_x||confronto_pos_t_y)
+		//{
 			create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,dati_rilevati,conto_per_confronto);
 			create_gnuplot_file( "Parametri_Ellissi_T.plt", "Parametri_Ellissi_Funz_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ellissi_T,dati_rilevati,conto_per_confronto);
 			system ("gnuplot Funzioni_Ottiche_T.plt");
 			system ("gnuplot Parametri_Ellissi_T.plt");
-		}
+		//}
 #endif
 	}
 	else	
