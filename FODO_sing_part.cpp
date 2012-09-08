@@ -733,14 +733,14 @@ int main(int argc, char *argv[])
 
 		for (int i = 0; i < 2; i++) alpha[i] = beta[i] = aminmax[i] = bminmax[i] = 0.;
 
-		//if ( (fabs((F[FOC][FOC]+F[FOC+1][FOC+1])*0.5) <= 1.) && (fabs((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*0.5) <= 1.))
-		//	posso_fare_funzioni_ottiche = true;
-		//else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
+		if ( (fabs((F[FOC][FOC]+F[FOC+1][FOC+1])*0.5) <= 1.) && (fabs((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*0.5) <= 1.))
+			posso_fare_funzioni_ottiche = true;
+		else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
 		//cout << "posso_fare_funzioni_ottiche="<<posso_fare_funzioni_ottiche<<endl;
 
-		if ((((F[FOC][FOC]+F[FOC+1][FOC+1])*(F[FOC][FOC]+F[FOC+1][FOC+1])-4)<=0) && (((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*(F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])-4)<=0) )
-				posso_fare_funzioni_ottiche = true;
-		else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
+		//if ((((F[FOC][FOC]+F[FOC+1][FOC+1])*(F[FOC][FOC]+F[FOC+1][FOC+1])-4)<=0) && (((F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])*(F[DEFOC][DEFOC]+F[DEFOC+1][DEFOC+1])-4)<=0) )
+		//		posso_fare_funzioni_ottiche = true;
+		//else cout << "Impossibile calcolare le funzioni ottiche!" << endl;
 		if (posso_fare_funzioni_ottiche)
 		{
 			alpha=optics(F,FOC,&alpha_calcolato_con_successo);
@@ -1162,7 +1162,7 @@ int main(int argc, char *argv[])
 		//if (confronto_pos_t_x||confronto_pos_t_y)
 		//{
 			create_gnuplot_file( "Funzioni_Ottiche_T.plt", "Funzioni_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ottiche_T,dati_rilevati,conto_per_confronto);
-			create_gnuplot_file( "Parametri_Ellissi_T.plt", "Parametri_Ellissi_Funz_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_opt ,0.0, lunghezza_accumulata, etichette_ellissi_T,dati_rilevati,conto_per_confronto);
+			create_gnuplot_file( "Parametri_Ellissi_T.plt", "Parametri_Ellissi_Funz_Ottiche_T.txt", lunghezza, contatore, gnuplot_ymax_ell ,0.0, lunghezza_accumulata, etichette_ellissi_T,dati_rilevati,conto_per_confronto);
 			system ("gnuplot Funzioni_Ottiche_T.plt");
 			system ("gnuplot Parametri_Ellissi_T.plt");
 		//}
